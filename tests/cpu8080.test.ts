@@ -137,3 +137,47 @@ describe("Cpu8080 IN/OUT", () => {
     expect(cpu.halted).toBe(true);
   });
 });
+
+describe("Cpu8080 real-world program (NEC TK-80 Application Program manual)", () => {
+  it("runs the 'electronic siren' program (ch.2) exactly as coded in the manual", () => {
+    // Full object code transcribed from NEC's "TK-80 応用プログラム" (IEM-561A), chapter 2
+    // "電子サイレン" (electronic siren), section 2.4 コーディング例. Self-contained - unlike most
+    // of the manual's other sample programs, it doesn't call into the monitor ROM (which this
+    // emulator doesn't include) - it just sweeps a frequency parameter in B down from 0x50 to
+    // 0x40 and back up, OUTing an alternating square wave to port 2, timed by a local WAIT
+    // subroutine. That mix of OUT, DCX/INX B, CPI/JNZ, and a nested CALL/PUSH/DCR/JNZ/POP/RET
+    // subroutine is exactly the shape of code that hid the OUT/IN port-byte-skip bug, so this
+    // is a genuine (not synthetic) regression check against a real published TK-80 program.
+    // prettier-ignore
+    const program = [
+      0x06, 0x50, 0x3e, 0x02, 0xd3, 0x02, 0xcd, 0x33, 0x82, 0x3e, 0x00, 0xd3, 0x02, 0xcd, 0x33, 0x82,
+      0x0b, 0x78, 0xfe, 0x40, 0x47, 0xc2, 0x02, 0x82, 0x06, 0x40, 0x3e, 0x02, 0xd3, 0x02, 0xcd, 0x33,
+      0x82, 0x3e, 0x00, 0xd3, 0x02, 0xcd, 0x33, 0x82, 0x03, 0x78, 0xfe, 0x50, 0x47, 0xc2, 0x1a, 0x82,
+      0xc3, 0x00, 0x82, 0xc5, 0x05, 0xc2, 0x34, 0x82, 0xc1, 0xc9,
+    ];
+    const mem = new Memory();
+    mem.loadBytes(0x8200, program);
+    const outputs: { port: number; value: number }[] = [];
+    const io: IoBus = { output: (port, value) => outputs.push({ port, value }), input: () => 0 };
+    const cpu = new Cpu8080(mem, io);
+    cpu.pc = 0x8200;
+
+    // The program free-runs forever (it JMPs back to START), so run it for a generous but
+    // bounded number of steps: enough to sweep B all the way down to the 0x40 floor (end of
+    // LOOP1) and see it climb back past that floor in LOOP2, then stop.
+    let sawFloor = false;
+    let climbedBack = false;
+    for (let i = 0; i < 200_000 && !climbedBack; i++) {
+      cpu.step();
+      if (cpu.b === 0x40) sawFloor = true;
+      if (sawFloor && cpu.b > 0x40) climbedBack = true;
+    }
+
+    expect(sawFloor).toBe(true);
+    expect(climbedBack).toBe(true);
+    expect(outputs.length).toBeGreaterThan(0);
+    expect(outputs.every((o) => o.port === 2)).toBe(true);
+    // each pulse cycle is a "2" (tone on) immediately followed by a "0" (tone off)
+    outputs.forEach((o, i) => expect(o.value).toBe(i % 2 === 0 ? 2 : 0));
+  });
+});
