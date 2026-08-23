@@ -24,6 +24,13 @@
   box-sizing: border-box;
 }
 
+/* some elements below set their own `display` (e.g. flex row layouts), which would
+   otherwise override the browser's default `[hidden] { display: none }` and leave
+   them visible - toggling `hidden` is used throughout for section visibility. */
+[hidden] {
+  display: none !important;
+}
+
 body {
   margin: 0;
   min-height: 100vh;
@@ -342,29 +349,12 @@ button.fn:hover {
   outline-offset: 1px;
 }
 
-/* --- tutorial: step-by-step walkthrough, directly under the device. It only ever
-   displays instructions - it never touches the panel - so paging through it leaves
-   whatever the visitor has done on the real controls untouched. --- */
+/* --- tutorial: shown inside the manual card in place of the operating instructions.
+   It only ever displays instructions - it never touches the panel - so entering,
+   paging through, or exiting it leaves whatever the visitor has done on the real
+   controls untouched. --- */
 
-.tutorial {
-  background: var(--panel-gradient);
-  border-radius: 10px;
-  padding: 20px 22px;
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.05) inset;
-}
-
-.tutorial-head {
-  margin-bottom: 12px;
-}
-
-.tutorial h2 {
-  margin: 0;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--paper);
-}
-
-/* --- collapsed / table-of-contents states --- */
+/* --- table-of-contents state --- */
 
 .tutorial-intro {
   margin: 0 0 12px;
@@ -514,25 +504,13 @@ button.fn:hover {
 
 .tutorial-nav {
   display: flex;
+  justify-content: flex-end;
   gap: 8px;
   margin-top: 4px;
 }
 
 .tutorial-nav button {
-  flex: 1;
   width: auto;
-}
-
-.tutorial-nav button:disabled {
-  opacity: 0.35;
-  pointer-events: none;
-}
-
-.tutorial-nav button[data-action="exit"] {
-  background: var(--pcb-bright);
-}
-.tutorial-nav button[data-action="exit"]:hover {
-  background: var(--pcb-bright-hi);
 }
 
 /* --- manual: static page chrome around the device --- */
@@ -550,6 +528,11 @@ button.fn:hover {
   justify-content: space-between;
   gap: 12px;
   margin-bottom: 12px;
+}
+
+.manual-head-actions {
+  display: flex;
+  gap: 8px;
 }
 
 .manual h2 {

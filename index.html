@@ -34,21 +34,24 @@
     <div class="page">
       <div id="app"></div>
 
-      <div class="tutorial">
-        <div class="tutorial-head">
-          <h2>はじめての方へ</h2>
-        </div>
-        <div class="tutorial-body" id="tutorial-body"></div>
-      </div>
-
       <div class="manual">
-        <div class="manual-head">
+        <div class="manual-head" id="manual-head-normal">
           <h2>Operating the panel</h2>
-          <button id="lang-toggle" class="lang-toggle" type="button" aria-label="Switch language / 言語を切り替え">
-            ENG/JP
-          </button>
+          <div class="manual-head-actions">
+            <button id="lang-toggle" class="lang-toggle" type="button" aria-label="Switch language / 言語を切り替え">
+              ENG/JP
+            </button>
+            <button id="tutorial-entry" class="lang-toggle" type="button">チュートリアル</button>
+          </div>
+        </div>
+        <div class="manual-head" id="manual-head-tutorial" hidden>
+          <h2>チュートリアル</h2>
+          <button id="tutorial-exit-head" class="lang-toggle" type="button">終了</button>
         </div>
 
+        <div class="tutorial-body" id="tutorial-body" hidden></div>
+
+        <div id="manual-normal-body">
         <div class="manual-lang manual-lang-en">
           <ol>
             <li><strong>RESET</strong> — clear the CPU and panel</li>
@@ -103,6 +106,7 @@
             実機のモニターROMはNECの著作物のため同梱していません —
             かわりにこのパネルのアドレス設定・書き込み・実行のロジックを直接実装しています。
           </p>
+        </div>
         </div>
 
         <p class="credit">

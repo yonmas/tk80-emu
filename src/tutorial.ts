@@ -1,11 +1,11 @@
 /**
- * A collapsible, click-through walkthrough shown below the device. It only ever
- * displays instructions - it never touches the panel - so opening it, jumping
- * between steps, or exiting never disturbs whatever the visitor has done on the
- * real controls.
+ * A click-through walkthrough shown inside the manual card, in place of the normal
+ * operating instructions, entered via a button next to ENG/JP. It only ever displays
+ * instructions - it never touches the panel - so entering, jumping between steps, or
+ * exiting never disturbs whatever the visitor has done on the real controls.
  *
- * States: "collapsed" (just an entry point) -> "toc" (links to each step) ->
- * "step" (one step's content, with prev/next/exit).
+ * States while active: "toc" (links to each step) -> "step" (one step's content,
+ * with prev/next-or-exit navigation).
  */
 
 interface Step {
@@ -129,22 +129,18 @@ const STEPS: Step[] = [
   },
 ];
 
-type TutorialState = { kind: "collapsed" } | { kind: "toc" } | { kind: "step"; index: number };
+type TutorialState = { kind: "toc" } | { kind: "step"; index: number };
 
 export function initTutorial(): void {
   const bodyEl = document.getElementById("tutorial-body");
-  if (!bodyEl) return;
+  const headNormal = document.getElementById("manual-head-normal");
+  const headTutorial = document.getElementById("manual-head-tutorial");
+  const normalBody = document.getElementById("manual-normal-body");
+  const entryBtn = document.getElementById("tutorial-entry");
+  const exitHeadBtn = document.getElementById("tutorial-exit-head");
+  if (!bodyEl || !headNormal || !headTutorial || !normalBody || !entryBtn || !exitHeadBtn) return;
 
-  let state: TutorialState = { kind: "collapsed" };
-
-  function renderCollapsed(): string {
-    return `
-      <p class="tutorial-intro">
-        実機に触れたことがない方向けに、3ステップでTK-80の基本操作を体験できます（エミュレーターの状態はそのまま残ります）。
-      </p>
-      <button type="button" class="fn" data-action="start">チュートリアルを始める</button>
-    `;
-  }
+  let state: TutorialState = { kind: "toc" };
 
   function renderToc(): string {
     const links = STEPS.map(
@@ -158,25 +154,42 @@ export function initTutorial(): void {
 
   function renderStep(index: number): string {
     const step = STEPS[index];
-    const isFirst = index === 0;
     const isLast = index === STEPS.length - 1;
     return `
       <div class="tutorial-progress">ステップ ${index + 1} / ${STEPS.length}</div>
       <h3>${step.title}</h3>
       ${step.body}
       <div class="tutorial-nav">
-        <button type="button" class="fn" data-action="prev" ${isFirst ? "disabled" : ""}>&larr; 戻る</button>
-        <button type="button" class="fn" data-action="next" ${isLast ? "disabled" : ""}>進む &rarr;</button>
-        <button type="button" class="fn" data-action="exit">終了</button>
+        <button type="button" class="fn" data-action="prev">&larr; 戻る</button>
+        <button type="button" class="fn" data-action="${isLast ? "exit" : "next"}">
+          ${isLast ? "終了" : "次のセクション &rarr;"}
+        </button>
       </div>
     `;
   }
 
   function render(): void {
-    if (state.kind === "collapsed") bodyEl!.innerHTML = renderCollapsed();
-    else if (state.kind === "toc") bodyEl!.innerHTML = renderToc();
-    else bodyEl!.innerHTML = renderStep(state.index);
+    bodyEl!.innerHTML = state.kind === "toc" ? renderToc() : renderStep(state.index);
   }
+
+  function enterTutorial(): void {
+    headNormal!.hidden = true;
+    headTutorial!.hidden = false;
+    normalBody!.hidden = true;
+    bodyEl!.hidden = false;
+    state = { kind: "toc" };
+    render();
+  }
+
+  function exitTutorial(): void {
+    headNormal!.hidden = false;
+    headTutorial!.hidden = true;
+    normalBody!.hidden = false;
+    bodyEl!.hidden = true;
+  }
+
+  entryBtn.addEventListener("click", enterTutorial);
+  exitHeadBtn.addEventListener("click", exitTutorial);
 
   bodyEl.addEventListener("click", (e) => {
     const target = (e.target as HTMLElement).closest<HTMLElement>("[data-action], [data-copy]");
@@ -201,17 +214,16 @@ export function initTutorial(): void {
     }
 
     const action = target.dataset.action;
-    if (action === "start") state = { kind: "toc" };
-    else if (action === "goto") state = { kind: "step", index: Number(target.dataset.step) };
+    if (action === "goto") state = { kind: "step", index: Number(target.dataset.step) };
     else if (action === "prev" && state.kind === "step") {
       state = state.index === 0 ? { kind: "toc" } : { kind: "step", index: state.index - 1 };
     } else if (action === "next" && state.kind === "step" && state.index < STEPS.length - 1) {
       state = { kind: "step", index: state.index + 1 };
-    } else if (action === "exit") state = { kind: "collapsed" };
-    else return;
+    } else if (action === "exit") {
+      exitTutorial();
+      return;
+    } else return;
 
     render();
   });
-
-  render();
 }
