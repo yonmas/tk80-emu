@@ -239,16 +239,15 @@ body {
   position: relative;
 }
 
-/* the RESET key's added (STOP) note (see main.ts) - hangs below and right of the
-   label, in a different hand, so it reads as a note added on top rather than part
-   of the printed label itself. */
+/* the RESET key's added (STOP) note (see main.ts) - tucked into the button's own
+   lower-right, below "RESET" but still on the keycap, in a different hand so it
+   reads as a note added on top rather than part of the printed label itself. */
 .stop-note {
   position: absolute;
-  top: 100%;
-  left: 60%;
-  margin-top: 3px;
+  bottom: 4px;
+  right: 3px;
   font-family: "Permanent Marker", cursive;
-  font-size: 11px;
+  font-size: 10px;
   line-height: 1;
   color: var(--ember);
   white-space: nowrap;
