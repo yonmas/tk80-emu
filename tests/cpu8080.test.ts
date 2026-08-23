@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { Cpu8080 } from "../src/cpu8080";
+import { Cpu8080, type IoBus } from "../src/cpu8080";
 import { Memory } from "../src/memory";
 
 function makeCpu(program: number[], loadAddr = 0): { cpu: Cpu8080; mem: Memory } {
@@ -97,5 +97,43 @@ describe("Cpu8080 DAA", () => {
     run(cpu);
     expect(cpu.a).toBe(0x10);
     expect(cpu.cy).toBe(false);
+  });
+});
+
+describe("Cpu8080 IN/OUT", () => {
+  it("advances PC past the port byte with no IoBus attached", () => {
+    // the TK-80 panel runs the CPU with no IoBus (see main.ts), so OUT/IN must
+    // still consume their port-number operand even when there's nothing to call
+    // OUT 05 ; MVI A,42 ; HLT - if OUT fails to advance PC past 05, the 05 byte
+    // gets decoded as the next opcode instead of MVI A,42, and A stays 0
+    const { cpu } = makeCpu([0xd3, 0x05, 0x3e, 0x42, 0x76]);
+    run(cpu);
+    expect(cpu.a).toBe(0x42);
+    expect(cpu.halted).toBe(true);
+  });
+
+  it("advances PC past the port byte and sets A=0xff with no IoBus attached", () => {
+    // IN 05 ; MVI B,42 ; HLT - same desync check as OUT, from the read side
+    const { cpu } = makeCpu([0xdb, 0x05, 0x06, 0x42, 0x76]);
+    run(cpu);
+    expect(cpu.a).toBe(0xff);
+    expect(cpu.b).toBe(0x42);
+    expect(cpu.halted).toBe(true);
+  });
+
+  it("routes OUT/IN through an attached IoBus", () => {
+    const written: { port: number; value: number }[] = [];
+    const io: IoBus = {
+      output: (port, value) => written.push({ port, value }),
+      input: (port) => 0x10 + port,
+    };
+    const mem = new Memory();
+    // MVI A,42 ; OUT 07 ; IN 03 ; HLT
+    mem.loadBytes(0, [0x3e, 0x42, 0xd3, 0x07, 0xdb, 0x03, 0x76]);
+    const cpu = new Cpu8080(mem, io);
+    run(cpu);
+    expect(written).toEqual([{ port: 0x07, value: 0x42 }]);
+    expect(cpu.a).toBe(0x13);
+    expect(cpu.halted).toBe(true);
   });
 });

@@ -663,9 +663,11 @@ export class Cpu8080 {
         return 10;
       case 0xd2:
         return this.jmpIf(!this.cy);
-      case 0xd3:
-        this.io?.output(this.fetch8(), this.a);
+      case 0xd3: {
+        const port = this.fetch8();
+        this.io?.output(port, this.a);
         return 10; // OUT
+      }
       case 0xd4:
         return this.callIf(!this.cy);
       case 0xd5:
@@ -684,9 +686,11 @@ export class Cpu8080 {
         return 10; // undocumented RET dup
       case 0xda:
         return this.jmpIf(this.cy);
-      case 0xdb:
-        this.a = this.io?.input(this.fetch8()) ?? 0xff;
+      case 0xdb: {
+        const port = this.fetch8();
+        this.a = this.io?.input(port) ?? 0xff;
         return 10; // IN
+      }
       case 0xdc:
         return this.callIf(this.cy);
       case 0xdd:
