@@ -41,7 +41,14 @@
           <li><strong>ADRS SET</strong>, then four hex digits — point at an address</li>
           <li>two hex digits, then <strong>WRITE INCR</strong> — store a byte and advance to the next address</li>
           <li><strong>READ INCR / READ DECR</strong> — step to the next or previous address</li>
-          <li><strong>RUN</strong> — jump the CPU to the current address; it stops on <code>HLT</code></li>
+          <li>
+            <strong>MODE</strong> — AUTO makes <strong>RUN</strong> free-run to <code>HLT</code>; STEP makes
+            <strong>RUN</strong> execute one instruction (showing PC/A/flags) and <strong>RET</strong> keep stepping
+          </li>
+          <li>
+            <strong>STORE DATA / LOAD DATA</strong> — save or restore the [address, data] memory range via the
+            browser's local storage, standing in for the real machine's cassette interface
+          </li>
         </ol>
         <p class="note">
           The real TK-80's monitor ROM is NEC's copyrighted firmware and isn't included here —

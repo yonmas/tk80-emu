@@ -65,6 +65,11 @@ export class Cpu8080 {
     return true;
   }
 
+  /** The 8080 flags register (S Z 0 AC 0 P 1 CY), packed the way PUSH PSW writes it. */
+  getFlags(): number {
+    return this.getF();
+  }
+
   private fetch8(): number {
     const v = this.bus.read8(this.pc);
     this.pc = (this.pc + 1) & 0xffff;

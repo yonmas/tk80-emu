@@ -95,29 +95,42 @@ const statusEl = document.createElement("div");
 statusEl.className = "status";
 displayEl.appendChild(statusEl);
 
-const fnKeysEl = document.createElement("div");
-fnKeysEl.className = "fnkeys";
-caseEl.appendChild(fnKeysEl);
-
-function makeFnButton(label: string, onClick: () => void): HTMLButtonElement {
+function makeFnButton(parent: HTMLElement, label: string, onClick: () => void): HTMLButtonElement {
   const btn = document.createElement("button");
   btn.className = "fn";
   btn.textContent = label;
   btn.addEventListener("click", onClick);
-  fnKeysEl.appendChild(btn);
+  parent.appendChild(btn);
   return btn;
 }
 
-makeFnButton("RESET", () => panel.pressReset());
-makeFnButton("ADRS SET", () => panel.pressAdrsSet());
-makeFnButton("READ INCR", () => panel.pressIncr());
-makeFnButton("READ DECR", () => panel.pressDecr());
-makeFnButton("WRITE INCR", () => panel.pressWrite());
-makeFnButton("RUN", () => panel.pressRun());
+// top row, matches the real board's 5-key row: RET RUN STORE DATA LOAD DATA RESET
+const topKeysEl = document.createElement("div");
+topKeysEl.className = "topkeys";
+caseEl.appendChild(topKeysEl);
+
+makeFnButton(topKeysEl, "RET", () => panel.pressRet());
+makeFnButton(topKeysEl, "RUN", () => panel.pressRun());
+makeFnButton(topKeysEl, "STORE DATA", () => panel.pressStoreData());
+makeFnButton(topKeysEl, "LOAD DATA", () => panel.pressLoadData());
+makeFnButton(topKeysEl, "RESET", () => panel.pressReset());
+
+// MODE switch: AUTO free-runs to HLT, STEP executes one instruction per RUN/RET press
+const modeBtn = makeFnButton(topKeysEl, "", () => {
+  panel.toggleMode();
+  modeBtn.textContent = `MODE: ${panel.mode.toUpperCase()}`;
+});
+modeBtn.className = "fn mode";
+modeBtn.textContent = `MODE: ${panel.mode.toUpperCase()}`;
+
+// keypad row: hex keys on the left, the remaining function keys in a column to their right
+const keypadRowEl = document.createElement("div");
+keypadRowEl.className = "keypad-row";
+caseEl.appendChild(keypadRowEl);
 
 const keysEl = document.createElement("div");
 keysEl.className = "keys";
-caseEl.appendChild(keysEl);
+keypadRowEl.appendChild(keysEl);
 
 const KEY_ORDER = ["C", "D", "E", "F", "8", "9", "A", "B", "4", "5", "6", "7", "0", "1", "2", "3"];
 for (const key of KEY_ORDER) {
@@ -126,6 +139,15 @@ for (const key of KEY_ORDER) {
   btn.addEventListener("click", () => panel.pressHex(parseInt(key, 16)));
   keysEl.appendChild(btn);
 }
+
+const rightFnKeysEl = document.createElement("div");
+rightFnKeysEl.className = "right-fnkeys";
+keypadRowEl.appendChild(rightFnKeysEl);
+
+makeFnButton(rightFnKeysEl, "ADRS SET", () => panel.pressAdrsSet());
+makeFnButton(rightFnKeysEl, "READ INCR", () => panel.pressIncr());
+makeFnButton(rightFnKeysEl, "READ DECR", () => panel.pressDecr());
+makeFnButton(rightFnKeysEl, "WRITE INCR", () => panel.pressWrite());
 
 const loaderEl = document.createElement("div");
 loaderEl.className = "loader";
@@ -167,14 +189,21 @@ const hintEl = document.createElement("div");
 hintEl.className = "hint";
 hintEl.textContent =
   "The real monitor ROM isn't included here (it's NEC's copyrighted firmware). ADRS SET → four hex digits → " +
-  "two hex digits → WRITE INCR stores a byte and advances to the next address; RUN executes from the current address. " +
-  "Use the load @ field below to load a program directly at an address for testing.";
+  "two hex digits → WRITE INCR stores a byte and advances to the next address. In AUTO mode RUN free-runs to HLT; " +
+  "in STEP mode RUN executes one instruction and shows PC/A/flags, and RET keeps stepping. STORE DATA / LOAD DATA " +
+  "save and restore the [address, data] memory range via the browser's local storage, standing in for the real " +
+  "machine's cassette interface. Use the load @ field below to load a program directly at an address for testing.";
 caseEl.appendChild(hintEl);
 
 function render(): void {
   const s = panel.state;
-  hexDigits(s.address, 4).forEach((ch, i) => addressDigits[i].set(ch));
-  hexDigits(s.data, 4).forEach((ch, i) => dataDigits[i].set(ch));
+  if (s.loadError) {
+    ["E", "-", "-", "-"].forEach((ch, i) => addressDigits[i].set(ch));
+    ["-", "-", "-", "-"].forEach((ch, i) => dataDigits[i].set(ch));
+  } else {
+    hexDigits(s.address, 4).forEach((ch, i) => addressDigits[i].set(ch));
+    hexDigits(s.data, 4).forEach((ch, i) => dataDigits[i].set(ch));
+  }
 
   if (s.running) statusEl.innerHTML = '<span class="running">RUN</span>';
   else if (s.halted) statusEl.innerHTML = '<span class="halted">HALT</span>';
