@@ -229,14 +229,13 @@ loadBtn.addEventListener("click", () => {
 });
 bytesRowEl.appendChild(loadBtn);
 
-// operating-instructions card has an English and a Japanese version; the button just
-// swaps which one is visible, since this content lives in index.html, not #app.
+// operating-instructions card has English and Japanese versions of its heading and body; the
+// button just swaps which one is visible, since this content lives in index.html, not #app.
+// querySelectorAll (not querySelector) since the heading and body are separate EN/JA pairs.
 const langToggleBtn = document.getElementById("lang-toggle");
-const manualEnEl = document.querySelector(".manual-lang-en");
-const manualJaEl = document.querySelector(".manual-lang-ja");
+const manualLangEls = document.querySelectorAll(".manual-lang-en, .manual-lang-ja");
 langToggleBtn?.addEventListener("click", () => {
-  manualEnEl?.toggleAttribute("hidden");
-  manualJaEl?.toggleAttribute("hidden");
+  manualLangEls.forEach((el) => el.toggleAttribute("hidden"));
 });
 
 initTutorial();
