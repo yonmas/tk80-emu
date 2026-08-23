@@ -233,16 +233,27 @@ body {
   margin-bottom: 18px;
 }
 
-/* the RESET key's added (STOP) line (see main.ts) - sits under the printed label, on
-   the keycap itself, but in a different hand so it still reads as a note added on top
-   of the label rather than part of it. */
+/* lets the RESET key's (STOP) note (below) position itself against the button without
+   RESET's own label having to move off the same centered spot every other key uses. */
+.reset-btn {
+  position: relative;
+}
+
+/* the RESET key's added (STOP) note (see main.ts) - hangs below and right of the
+   label, in a different hand, so it reads as a note added on top rather than part
+   of the printed label itself. */
 .stop-note {
-  margin-top: 2px;
+  position: absolute;
+  top: 100%;
+  left: 60%;
+  margin-top: 3px;
   font-family: "Permanent Marker", cursive;
   font-size: 11px;
   line-height: 1;
   color: var(--ember);
-  transform: rotate(-4deg);
+  white-space: nowrap;
+  transform: rotate(-6deg);
+  pointer-events: none;
   text-shadow: 0 1px 1px rgba(0, 0, 0, 0.5);
 }
 
@@ -281,7 +292,6 @@ button {
   height: var(--key-size);
   padding: 0;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
   text-align: center;
