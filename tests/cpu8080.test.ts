@@ -180,4 +180,73 @@ describe("Cpu8080 real-world program (NEC TK-80 Application Program manual)", ()
     // each pulse cycle is a "2" (tone on) immediately followed by a "0" (tone off)
     outputs.forEach((o, i) => expect(o.value).toBe(i % 2 === 0 ? 2 : 0));
   });
+
+  it("runs the 'automatic music-play' program (ch.5) with a short custom tune", () => {
+    // Full object code transcribed from the same manual, chapter 5 "音楽の自動演奏プログラム"
+    // (automatic music-play program), section 5.4. Also self-contained - no monitor ROM calls.
+    // It reads (pitch, duration) byte pairs from a data table starting at 8250H, plays each
+    // pitch through the same OUT-driven square-wave envelope as chapter 2's SOUND subroutine,
+    // treats a pitch byte with its top bit set as a rest (silence - the WAIT path, no OUT calls
+    // at all), and a pitch byte of 0x00 as "end of song", which loops execution back to START to
+    // replay it. The manual (5.5) leaves the actual tune's bytes up to the user, so the data
+    // below is a short hand-picked tune in its documented format, not itself from the manual.
+    // prettier-ignore
+    const program = [
+      0x21, 0x50, 0x82, 0x7e, 0xa7, 0xca, 0x00, 0x82, 0x23, 0x4e, 0x47, 0x07, 0xda, 0x3c, 0x82, 0xe5,
+      0xcd, 0x1c, 0x82, 0xe1, 0x0d, 0xc2, 0x0f, 0x82, 0x23, 0xc3, 0x03, 0x82, 0x21, 0xff, 0x35, 0x50,
+      0x3e, 0x02, 0xd3, 0x02, 0x2b, 0x7c, 0xa7, 0xc8, 0x15, 0xc2, 0x24, 0x82, 0x50, 0x3e, 0x00, 0xd3,
+      0x02, 0x2b, 0x7c, 0xa7, 0xc8, 0x15, 0xc2, 0x31, 0x82, 0xc3, 0x1f, 0x82, 0xe5, 0x21, 0xff, 0x50,
+      0x2b, 0x7c, 0xa7, 0xc2, 0x40, 0x82, 0x0d, 0xc2, 0x3d, 0x82, 0xe1, 0x23, 0xc3, 0x03, 0x82,
+    ];
+    const mem = new Memory();
+    mem.loadBytes(0x8200, program);
+    // ド (0x33) for 1 unit, a rest (top bit set) for 1 unit, レ (0x2D) for 1 unit, then the
+    // 0x00 end-of-song sentinel - per the manual's pitch-parameter table (5.5) and format.
+    mem.loadBytes(0x8250, [0x33, 0x01, 0x80, 0x01, 0x2d, 0x01, 0x00]);
+
+    // Each CALL to SOUND restarts its own on/off cycle independent of where the *previous* call
+    // happened to end (SOUND can RZ out mid-cycle, on either polarity), so two "on" pulses can
+    // legitimately land back to back right at a note boundary. Segment the recorded pulses by
+    // SOUND call (entered at 0x821C) instead of asserting alternation across the whole stream.
+    const runs: number[][] = [];
+    let currentRun: number[] = [];
+    const pitchesUsed = new Set<number>();
+    const io: IoBus = {
+      output: (port, value) => {
+        expect(port).toBe(2);
+        currentRun.push(value);
+        pitchesUsed.add(cpu.b);
+      },
+      input: () => 0,
+    };
+    const cpu = new Cpu8080(mem, io);
+    cpu.pc = 0x8200;
+
+    // The song loops forever, so run for a generous but bounded step budget and count how many
+    // times execution enters START (0x8200): the first is the initial run, a second means the
+    // 0x00 sentinel was read and correctly looped the song back to the beginning.
+    let starts = 0;
+    for (let i = 0; i < 1_000_000 && starts < 2; i++) {
+      if (cpu.pc === 0x8200) {
+        starts++;
+        if (starts === 2) break;
+      }
+      if (cpu.pc === 0x821c && currentRun.length > 0) {
+        runs.push(currentRun);
+        currentRun = [];
+      }
+      cpu.step();
+    }
+    if (currentRun.length > 0) runs.push(currentRun);
+
+    expect(starts).toBe(2);
+    // one CALL SOUND per real note (duration 1 each) - the rest never calls SOUND at all
+    expect(runs.length).toBe(2);
+    for (const run of runs) {
+      run.forEach((v, i) => expect(v).toBe(i % 2 === 0 ? 2 : 0));
+    }
+    // only the two real notes (0x33 = ド, 0x2D = レ) ever reach the audio port - the rest
+    // (0x80, top bit set) never triggers OUT at all
+    expect(pitchesUsed).toEqual(new Set([0x33, 0x2d]));
+  });
 });
