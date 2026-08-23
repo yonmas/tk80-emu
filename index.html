@@ -39,8 +39,8 @@
         <ol>
           <li><strong>RESET</strong> — clear the CPU and panel</li>
           <li><strong>ADRS SET</strong>, then four hex digits — point at an address</li>
-          <li>two hex digits, then <strong>WRITE</strong> — store a byte there</li>
-          <li><strong>&uarr; INCR / &darr; DECR</strong> — step to the next or previous address</li>
+          <li>two hex digits, then <strong>WRITE INCR</strong> — store a byte and advance to the next address</li>
+          <li><strong>READ INCR / READ DECR</strong> — step to the next or previous address</li>
           <li><strong>RUN</strong> — jump the CPU to the current address; it stops on <code>HLT</code></li>
         </ol>
         <p class="note">

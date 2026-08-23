@@ -87,7 +87,7 @@ displayEl.appendChild(addressGroup);
 
 const dataGroup = document.createElement("div");
 dataGroup.className = "digits";
-const dataDigits = [0, 1].map(() => new SevenSegDigit());
+const dataDigits = [0, 1, 2, 3].map(() => new SevenSegDigit());
 dataDigits.forEach((d) => dataGroup.appendChild(d.el));
 displayEl.appendChild(dataGroup);
 
@@ -110,9 +110,9 @@ function makeFnButton(label: string, onClick: () => void): HTMLButtonElement {
 
 makeFnButton("RESET", () => panel.pressReset());
 makeFnButton("ADRS SET", () => panel.pressAdrsSet());
-makeFnButton("↑ INCR", () => panel.pressIncr());
-makeFnButton("↓ DECR", () => panel.pressDecr());
-makeFnButton("WRITE", () => panel.pressWrite());
+makeFnButton("READ INCR", () => panel.pressIncr());
+makeFnButton("READ DECR", () => panel.pressDecr());
+makeFnButton("WRITE INCR", () => panel.pressWrite());
 makeFnButton("RUN", () => panel.pressRun());
 
 const keysEl = document.createElement("div");
@@ -159,8 +159,7 @@ loadBtn.addEventListener("click", () => {
   if (bytes.length === 0 || bytes.some((b) => Number.isNaN(b))) return;
   memory.loadBytes(addr, bytes);
   panel.address = addr;
-  panel.entryTarget = "data";
-  panel.pendingData = memory.read8(addr);
+  panel.dataRegister = memory.read8(addr);
 });
 loaderEl.appendChild(loadBtn);
 
@@ -168,19 +167,18 @@ const hintEl = document.createElement("div");
 hintEl.className = "hint";
 hintEl.textContent =
   "The real monitor ROM isn't included here (it's NEC's copyrighted firmware). ADRS SET → four hex digits → " +
-  "two hex digits → WRITE stores a byte there; RUN executes from the current address. " +
+  "two hex digits → WRITE INCR stores a byte and advances to the next address; RUN executes from the current address. " +
   "Use the load @ field below to load a program directly at an address for testing.";
 caseEl.appendChild(hintEl);
 
 function render(): void {
   const s = panel.state;
   hexDigits(s.address, 4).forEach((ch, i) => addressDigits[i].set(ch));
-  hexDigits(s.data, 2).forEach((ch, i) => dataDigits[i].set(ch));
+  hexDigits(s.data, 4).forEach((ch, i) => dataDigits[i].set(ch));
 
-  const parts: string[] = [s.entryTarget === "address" ? "ADDR" : "DATA"];
-  if (s.running) parts.push('<span class="running">RUN</span>');
-  else if (s.halted) parts.push('<span class="halted">HALT</span>');
-  statusEl.innerHTML = parts.join(" &middot; ");
+  if (s.running) statusEl.innerHTML = '<span class="running">RUN</span>';
+  else if (s.halted) statusEl.innerHTML = '<span class="halted">HALT</span>';
+  else statusEl.innerHTML = "";
 }
 
 const CYCLES_PER_SECOND = 500_000;
