@@ -233,6 +233,27 @@ body {
   margin-bottom: 18px;
 }
 
+/* wraps just the RESET key so its (STOP) note (see main.ts) can be positioned relative to
+   it without disturbing the grid - the wrapper fills the same cell the button used to. */
+.reset-wrap {
+  position: relative;
+}
+
+.stop-note {
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  margin-left: 6px;
+  font-family: "Permanent Marker", cursive;
+  font-size: 13px;
+  line-height: 1;
+  color: var(--ember);
+  white-space: nowrap;
+  transform: translateY(-50%) rotate(-8deg);
+  pointer-events: none;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.5);
+}
+
 /* not one of the real board's 25 keys - it's the separate MODE toggle switch, so it's
    auto-placed into its own row below the grid (grid-column pins it under the
    right-hand function-key column instead of crowding into the 25-key layout). */

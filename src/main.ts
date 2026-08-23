@@ -159,7 +159,19 @@ makeFnButton(keygridEl, "RET", () => panel.pressRet(), FN_KEY_CODE.RET);
 makeFnButton(keygridEl, "RUN", () => panel.pressRun(), FN_KEY_CODE.RUN);
 makeFnButton(keygridEl, "STORE DATA", () => panel.pressStoreData(), FN_KEY_CODE.STORE_DATA);
 makeFnButton(keygridEl, "LOAD DATA", () => panel.pressLoadData(), FN_KEY_CODE.LOAD_DATA);
-makeFnButton(keygridEl, "RESET", () => panel.pressReset());
+const resetBtn = makeFnButton(keygridEl, "RESET", () => panel.pressReset());
+// Not on the real keycap - RESET is also the only way to stop a running sample, and someone
+// hearing it loop has no reason to go read the operating instructions to find that out. Styled
+// as a red marker scrawl rather than part of the button's own label, like a note someone
+// stuck on afterward, so it reads as an addition rather than a claim about the real hardware.
+const resetWrap = document.createElement("div");
+resetWrap.className = "reset-wrap";
+resetBtn.replaceWith(resetWrap);
+resetWrap.appendChild(resetBtn);
+const stopNote = document.createElement("span");
+stopNote.className = "stop-note";
+stopNote.textContent = "(STOP)";
+resetWrap.appendChild(stopNote);
 
 // 4 rows of hex keys, each followed by the real board's matching right-column function key
 const HEX_ROWS = [
