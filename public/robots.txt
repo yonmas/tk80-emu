@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://yonmas.github.io/tk80-emu/sitemap.xml

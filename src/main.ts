@@ -67,6 +67,10 @@ panel.onLoadData = playCmtBlock;
 app.innerHTML = "";
 
 const heading = document.createElement("h1");
+// the wordmark/tag split is purely visual (two flex items styled differently); give the
+// heading an explicit accessible name so screen readers and search engines see one coherent
+// phrase, "TK-80 emulator", rather than two abrupt fragments with no space between them.
+heading.setAttribute("aria-label", "TK-80 emulator");
 const wordmark = document.createElement("span");
 wordmark.className = "wordmark";
 wordmark.textContent = "TK-80";
