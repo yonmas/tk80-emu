@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="ember" x1="10%" y1="0%" x2="75%" y2="100%">
+      <stop offset="0%" stop-color="#fff8f4"/>
+      <stop offset="22%" stop-color="#ffd3bd"/>
+      <stop offset="45%" stop-color="#ff9268"/>
+      <stop offset="64%" stop-color="#ff4433"/>
+      <stop offset="100%" stop-color="#8f1c14"/>
+    </linearGradient>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="1.1" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect width="64" height="64" rx="14" fill="#161519"/>
+
+  <g filter="url(#glow)" fill="url(#ember)">
+    <polygon points="10.61,9.92 24.43,9.92 26.16,12.32 24.43,14.72 10.61,14.72 8.88,12.32"/>
+    <polygon points="25.2,14.53 27.6,12.8 30,14.53 30,28.35 27.6,30.08 25.2,28.35"/>
+    <polygon points="25.2,34.69 27.6,32.96 30,34.69 30,48.51 27.6,50.24 25.2,48.51"/>
+    <polygon points="10.61,49.28 24.43,49.28 26.16,51.68 24.43,54.08 10.61,54.08 8.88,51.68"/>
+    <polygon points="5.04,34.69 7.44,32.96 9.84,34.69 9.84,48.51 7.44,50.24 5.04,48.51"/>
+    <polygon points="5.04,14.53 7.44,12.8 9.84,14.53 9.84,28.35 7.44,30.08 5.04,28.35"/>
+    <polygon points="10.61,29.6 24.43,29.6 26.16,32 24.43,34.4 10.61,34.4 8.88,32"/>
+    <polygon points="39.57,9.92 53.39,9.92 55.12,12.32 53.39,14.72 39.57,14.72 37.84,12.32"/>
+    <polygon points="54.16,14.53 56.56,12.8 58.96,14.53 58.96,28.35 56.56,30.08 54.16,28.35"/>
+    <polygon points="54.16,34.69 56.56,32.96 58.96,34.69 58.96,48.51 56.56,50.24 54.16,48.51"/>
+    <polygon points="39.57,49.28 53.39,49.28 55.12,51.68 53.39,54.08 39.57,54.08 37.84,51.68"/>
+    <polygon points="34,34.69 36.4,32.96 38.8,34.69 38.8,48.51 36.4,50.24 34,48.51"/>
+    <polygon points="34,14.53 36.4,12.8 38.8,14.53 38.8,28.35 36.4,30.08 34,28.35"/>
+  </g>
+</svg>
+
