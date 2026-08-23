@@ -62,7 +62,13 @@ const panel = new TK80Panel(cpu, memory);
 app.innerHTML = "";
 
 const heading = document.createElement("h1");
-heading.textContent = "TK-80 emulator";
+const wordmark = document.createElement("span");
+wordmark.className = "wordmark";
+wordmark.textContent = "TK-80";
+const tag = document.createElement("span");
+tag.className = "tag";
+tag.textContent = "emulator";
+heading.append(wordmark, tag);
 app.appendChild(heading);
 
 const caseEl = document.createElement("div");
@@ -161,8 +167,9 @@ loaderEl.appendChild(loadBtn);
 const hintEl = document.createElement("div");
 hintEl.className = "hint";
 hintEl.textContent =
-  "実機のモニターROMは著作物のため同梱していません。ADRS SET→番地入力→16進キーでデータ入力→WRITEで書き込み、" +
-  "RUNでその番地から実行できます。動作確認用に「load @」欄からアドレス指定でプログラムを直接ロードすることも可能です。";
+  "The real monitor ROM isn't included here (it's NEC's copyrighted firmware). ADRS SET → four hex digits → " +
+  "two hex digits → WRITE stores a byte there; RUN executes from the current address. " +
+  "Use the load @ field below to load a program directly at an address for testing.";
 caseEl.appendChild(hintEl);
 
 function render(): void {
