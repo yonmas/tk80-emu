@@ -105,56 +105,51 @@ function makeFnButton(parent: HTMLElement, label: string, onClick: () => void): 
   return btn;
 }
 
+// One grid holds every key - top row, hex keypad, right-hand function column, and MODE -
+// so all 5 columns share the same tracks and line up across every row, like the real board.
+const keygridEl = document.createElement("div");
+keygridEl.className = "keygrid";
+caseEl.appendChild(keygridEl);
+
 // top row, matches the real board's 5-key row: RET RUN STORE DATA LOAD DATA RESET
-const topKeysEl = document.createElement("div");
-topKeysEl.className = "topkeys";
-caseEl.appendChild(topKeysEl);
+makeFnButton(keygridEl, "RET", () => panel.pressRet());
+makeFnButton(keygridEl, "RUN", () => panel.pressRun());
+makeFnButton(keygridEl, "STORE DATA", () => panel.pressStoreData());
+makeFnButton(keygridEl, "LOAD DATA", () => panel.pressLoadData());
+makeFnButton(keygridEl, "RESET", () => panel.pressReset());
 
-makeFnButton(topKeysEl, "RET", () => panel.pressRet());
-makeFnButton(topKeysEl, "RUN", () => panel.pressRun());
-makeFnButton(topKeysEl, "STORE DATA", () => panel.pressStoreData());
-makeFnButton(topKeysEl, "LOAD DATA", () => panel.pressLoadData());
-makeFnButton(topKeysEl, "RESET", () => panel.pressReset());
-
-// keypad row: hex keys on the left, the remaining function keys in a column to their right
-const keypadRowEl = document.createElement("div");
-keypadRowEl.className = "keypad-row";
-caseEl.appendChild(keypadRowEl);
-
-const keysEl = document.createElement("div");
-keysEl.className = "keys";
-keypadRowEl.appendChild(keysEl);
-
-const KEY_ORDER = ["C", "D", "E", "F", "8", "9", "A", "B", "4", "5", "6", "7", "0", "1", "2", "3"];
-for (const key of KEY_ORDER) {
-  const btn = document.createElement("button");
-  btn.textContent = key;
-  btn.addEventListener("click", () => panel.pressHex(parseInt(key, 16)));
-  keysEl.appendChild(btn);
-}
-
-const rightFnKeysEl = document.createElement("div");
-rightFnKeysEl.className = "right-fnkeys";
-keypadRowEl.appendChild(rightFnKeysEl);
-
-makeFnButton(rightFnKeysEl, "ADRS SET", () => panel.pressAdrsSet());
-makeFnButton(rightFnKeysEl, "READ INCR", () => panel.pressIncr());
-makeFnButton(rightFnKeysEl, "READ DECR", () => panel.pressDecr());
-makeFnButton(rightFnKeysEl, "WRITE INCR", () => panel.pressWrite());
+// 4 rows of hex keys, each followed by the real board's matching right-column function key
+const HEX_ROWS = [
+  ["C", "D", "E", "F"],
+  ["8", "9", "A", "B"],
+  ["4", "5", "6", "7"],
+  ["0", "1", "2", "3"],
+];
+const ROW_FN_KEYS: [string, () => void][] = [
+  ["ADRS SET", () => panel.pressAdrsSet()],
+  ["READ INCR", () => panel.pressIncr()],
+  ["READ DECR", () => panel.pressDecr()],
+  ["WRITE INCR", () => panel.pressWrite()],
+];
+HEX_ROWS.forEach((row, i) => {
+  for (const key of row) {
+    const btn = document.createElement("button");
+    btn.textContent = key;
+    btn.addEventListener("click", () => panel.pressHex(parseInt(key, 16)));
+    keygridEl.appendChild(btn);
+  }
+  const [label, onClick] = ROW_FN_KEYS[i];
+  makeFnButton(keygridEl, label, onClick);
+});
 
 // MODE switch: AUTO free-runs to HLT, STEP executes one instruction per RUN/RET press.
-// Not one of the real board's 25 keys - it's a separate toggle switch - so it sits
-// outside the key grid rather than in it.
-const modeRowEl = document.createElement("div");
-modeRowEl.className = "mode-row";
-caseEl.appendChild(modeRowEl);
-
-const modeBtn = makeFnButton(modeRowEl, "", () => {
+// Not one of the real board's 25 keys - it's a separate toggle switch - so it's placed
+// in its own row below the grid (CSS pins it under the right-hand function-key column).
+const modeBtn = makeFnButton(keygridEl, `MODE ${panel.mode.toUpperCase()}`, () => {
   panel.toggleMode();
-  modeBtn.textContent = `MODE: ${panel.mode.toUpperCase()}`;
+  modeBtn.innerHTML = `MODE<br>${panel.mode.toUpperCase()}`;
 });
 modeBtn.className = "fn mode";
-modeBtn.textContent = `MODE: ${panel.mode.toUpperCase()}`;
 
 const loaderEl = document.createElement("div");
 loaderEl.className = "loader";

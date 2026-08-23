@@ -2,8 +2,11 @@
   --void: #0a0a0b;
   --pcb: #10301f;
   --pcb-hi: #1b4a30;
+  --pcb-bright: #276b45;
+  --pcb-bright-hi: #327d53;
   --card: #2c2b2d;
   --bezel: #12100e;
+  --key-size: 56px;
   --ember: #ff4433;
   --ember-dim: #3d1613;
   --key: #5c9c7f;
@@ -79,30 +82,22 @@ body {
   margin: 0 0 18px;
 }
 
+/* the real board's title is silkscreened in plain white block lettering, not printed
+   ink-jet chrome - so this is flat white, no gradient, wide letter-spacing. */
 #app > h1 .wordmark {
   font-family: "Michroma", var(--font-display);
-  font-size: 23px;
+  font-size: 21px;
   line-height: 1;
-  letter-spacing: 0.03em;
-  background: linear-gradient(
-    160deg,
-    #fff8f4 0%,
-    #ffd3bd 20%,
-    #ff9268 40%,
-    #ff4433 58%,
-    #a8221a 76%,
-    #fff2ea 100%
-  );
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  filter: drop-shadow(0 0 9px rgba(255, 68, 51, 0.5));
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--paper);
 }
 
 #app > h1 .tag {
-  font-size: 13px;
-  font-weight: 500;
-  letter-spacing: 0.03em;
+  font-family: "Michroma", var(--font-display);
+  font-size: 12px;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
   color: var(--slate);
 }
 
@@ -117,7 +112,7 @@ body {
 }
 
 .display {
-  background: var(--bezel);
+  background: var(--pcb-bright);
   border-radius: 8px;
   padding: 18px 22px;
   display: flex;
@@ -219,64 +214,53 @@ body {
   color: var(--warn);
 }
 
-.topkeys {
+/* every key (top row, hex pad, right-hand function column, MODE) lives in one grid
+   with the same 5 columns, so their vertical edges line up row to row like the real
+   board - rather than the top row and keypad using separately-sized layouts. */
+.keygrid {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(5, var(--key-size));
+  grid-auto-rows: var(--key-size);
   gap: 8px;
-  margin-bottom: 16px;
+  justify-content: center;
+  margin-bottom: 18px;
 }
 
-/* not one of the real board's 25 keys - it's the separate MODE toggle switch,
-   so it lives outside the key grid entirely rather than crowding into it. */
-.mode-row {
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: 16px;
-}
-
-button.fn.mode {
-  width: auto;
-  padding-left: 16px;
-  padding-right: 16px;
-  background: var(--bezel);
+/* not one of the real board's 25 keys - it's the separate MODE toggle switch, so it's
+   auto-placed into its own row below the grid (grid-column pins it under the
+   right-hand function-key column instead of crowding into the 25-key layout). */
+.keygrid button.mode {
+  grid-column: 5;
+  background: var(--pcb-bright);
   color: var(--slate);
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.05) inset;
 }
-button.fn.mode:hover {
-  background: #1c1b20;
+.keygrid button.mode:hover {
+  background: var(--pcb-bright-hi);
   color: var(--paper);
-}
-
-.keypad-row {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 16px;
-}
-
-.keys {
-  flex: 4;
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
-}
-
-.right-fnkeys {
-  flex: 1.3;
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 8px;
 }
 
 button {
   font: inherit;
   border: none;
   border-radius: 7px;
-  padding: 12px 0;
+  padding: 12px 14px;
   background: var(--key);
   color: var(--paper);
   cursor: pointer;
   font-size: 15px;
   box-shadow: 0 1px 0 rgba(255, 255, 255, 0.08) inset, 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+/* every key is a fixed square, matching the real board's keycaps - not stretched to
+   fill the row, which is why the grid columns are a fixed px size rather than 1fr. */
+.keygrid button {
+  width: var(--key-size);
+  height: var(--key-size);
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -324,7 +308,7 @@ button.fn:hover {
 .loader input[type="text"] {
   flex: 1;
   font: inherit;
-  background: var(--bezel);
+  background: var(--pcb-bright);
   border: 1px solid rgba(255, 255, 255, 0.12);
   color: var(--paper);
   border-radius: 5px;
