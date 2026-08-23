@@ -338,14 +338,6 @@ button.fn:hover {
   outline-offset: 1px;
 }
 
-.hint {
-  font-family: var(--font-mono);
-  font-size: 11.5px;
-  color: #716f75;
-  margin-top: 14px;
-  line-height: 1.6;
-}
-
 /* --- manual: static page chrome around the device --- */
 
 .manual {

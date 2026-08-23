@@ -197,16 +197,6 @@ loadBtn.addEventListener("click", () => {
 });
 bytesRowEl.appendChild(loadBtn);
 
-const hintEl = document.createElement("div");
-hintEl.className = "hint";
-hintEl.textContent =
-  "ADRS SET → four hex digits → two hex digits → WRITE INCR stores a byte and advances to the next address. " +
-  "In AUTO mode RUN free-runs to HLT; in STEP mode RUN executes one instruction and shows PC/A/flags, and RET " +
-  "keeps stepping. STORE DATA / LOAD DATA save and restore the [address, data] memory range via the browser's " +
-  "local storage, standing in for the real machine's cassette interface. Use the load @ field below to load a " +
-  "program directly at an address for testing.";
-caseEl.appendChild(hintEl);
-
 function render(): void {
   const s = panel.state;
   if (s.loadError) {
