@@ -33,7 +33,14 @@ export class SpeakerIoBus implements IoBus {
   private node: ConstantSourceNode | null = null;
   private cycleAnchor = 0;
   private timeAnchor = 0;
-  private lastScheduledTime = 0;
+  // -Infinity (not 0) so the very first OUT call always looks "idle" below and re-anchors.
+  // With 0, `ctx.currentTime - lastScheduledTime` starts near zero too (a fresh AudioContext's
+  // clock also starts at 0), so the idle check could stay false on that first call - and then
+  // `t` would use the *raw* cumulative cycle count (everything since boot, including all the
+  // cycles spent idling in KEYIN's poll loop before any key was ever pressed) as if it were an
+  // elapsed-time-since-anchor, scheduling the first note however many seconds into the future
+  // the app happened to have been sitting idle for.
+  private lastScheduledTime = -Infinity;
   private lastLevel = 0;
 
   /** Wired up after the Cpu8080 exists, since it needs to read the CPU's own cycle counter. */
