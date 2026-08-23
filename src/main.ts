@@ -2,6 +2,7 @@ import { Cpu8080 } from "./cpu8080";
 import { Memory } from "./memory";
 import { TK80Panel } from "./panel";
 import { playCmtBlock } from "./cmtAudio";
+import { SpeakerIoBus, CPU_CLOCK_HZ } from "./organAudio";
 import { initTutorial } from "./tutorial";
 import { FN_KEY_CODE } from "./monitor";
 
@@ -59,7 +60,9 @@ function hexDigits(value: number, count: number): string[] {
 const app = document.getElementById("app")!;
 
 const memory = new Memory();
-const cpu = new Cpu8080(memory);
+const speaker = new SpeakerIoBus();
+const cpu = new Cpu8080(memory, speaker);
+speaker.setCycleSource(() => cpu.cycleCount);
 const panel = new TK80Panel(cpu, memory);
 panel.onStoreData = playCmtBlock;
 panel.onLoadData = playCmtBlock;
@@ -253,11 +256,15 @@ function render(): void {
   else statusEl.innerHTML = "";
 }
 
-const CYCLES_PER_SECOND = 500_000;
+// NEC TK-80 User's Manual (IEM-560A) 1.2: "クロック周波数 2.048MHz". Also required (not just
+// authentic) for organAudio.ts's speaker scheduling - see its own comment on CPU_CLOCK_HZ.
+const CYCLES_PER_SECOND = CPU_CLOCK_HZ;
 let lastTime = performance.now();
 
 function frame(now: number): void {
-  const elapsed = (now - lastTime) / 1000;
+  // clamp so a backgrounded-tab catch-up (or any other long gap) doesn't try to run millions
+  // of cycles synchronously in one frame
+  const elapsed = Math.min((now - lastTime) / 1000, 0.05);
   lastTime = now;
   if (panel.running) {
     const budget = Math.max(1, Math.floor(elapsed * CYCLES_PER_SECOND));

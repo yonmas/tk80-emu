@@ -1,4 +1,5 @@
 import { encodeCmtByte } from "./panel";
+import { getAudioContext } from "./audioContext";
 
 const BAUD_RATE = 110; // matches teletype, per the manual's ch. 6.2
 const BIT_SECONDS = 1 / BAUD_RATE;
@@ -10,16 +11,6 @@ const CARRIER_HZ = 2000;
 // minutes on the actual hardware too, so long transfers just skip the sound cue.
 const MAX_BLOCK_BYTES = 128;
 
-let sharedContext: AudioContext | null = null;
-
-function getContext(): AudioContext | null {
-  const Ctor = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext })
-    .webkitAudioContext;
-  if (!Ctor) return null;
-  if (!sharedContext) sharedContext = new Ctor();
-  return sharedContext;
-}
-
 /**
  * Plays `block` (a CMT transfer block - see panel.ts's buildCmtBlock) as the real
  * TK-80's cassette interface would sound: each byte becomes fig. 6-1's 12-bit serial
@@ -28,9 +19,8 @@ function getContext(): AudioContext | null {
  */
 export function playCmtBlock(block: number[]): void {
   if (block.length === 0 || block.length > MAX_BLOCK_BYTES) return;
-  const ctx = getContext();
+  const ctx = getAudioContext();
   if (!ctx) return;
-  if (ctx.state === "suspended") void ctx.resume();
 
   const osc = ctx.createOscillator();
   const gain = ctx.createGain();

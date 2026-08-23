@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { Cpu8080 } from "../src/cpu8080";
+import { Cpu8080, type IoBus } from "../src/cpu8080";
 import { Memory } from "../src/memory";
 import { TK80Panel } from "../src/panel";
 import { MONITOR_ADDR } from "../src/monitor";
@@ -93,6 +93,100 @@ describe("monitor: RGDSP driven by a real application program (NEC TK-80 応用�
     // seconds/minutes/hours haven't rolled over yet this early
     expect(panel.dataRegister >> 8).toBe(0);
     expect(panel.address).toBe(0);
+  });
+});
+
+describe("monitor: KEYIN driving a real application program (NEC TK-80 応用プログラム IEM-561A, ch.4 電子オルガン)", () => {
+  it("dispatches each pressed key to SOUND with the right on/off pulse shape, and sustains while held", () => {
+    const mem = new Memory();
+    // Full object code transcribed from section 4.3, keyed off the real KEYIN entry point
+    // (0x0216) rather than a synthetic harness like the KEYIN/INPUT tests below - this is what
+    // originally motivated implementing KEYIN in the first place. Ch.4 clears the monitor's KEY
+    // FLAG itself (the XRA A / STA 83F3H before JMP START) rather than relying on KEYIN's own
+    // re-report suppression, so a still-held key re-triggers SOUND every pass through the main
+    // loop - that's the mechanism that sustains a note for as long as the key is held.
+    // prettier-ignore
+    const program = [
+      0xcd, 0x16, 0x02,             // CALL KEYIN
+      0x06, 0x33, 0xfe, 0x00, 0xcc, 0x96, 0x82, // "0" -> B=33H (ド)
+      0x06, 0x31, 0xfe, 0x01, 0xcc, 0x96, 0x82, // "1" -> B=31H (ド#)
+      0x06, 0x2d, 0xfe, 0x02, 0xcc, 0x96, 0x82, // "2" -> B=2DH (レ)
+      0x06, 0x2b, 0xfe, 0x03, 0xcc, 0x96, 0x82, // "3" -> B=2BH (レ#)
+      0x06, 0x28, 0xfe, 0x15, 0xcc, 0x96, 0x82, // WRITE INCR -> B=28H (ミ)
+      0x06, 0x26, 0xfe, 0x04, 0xcc, 0x96, 0x82, // "4" -> B=26H (ファ)
+      0x06, 0x24, 0xfe, 0x05, 0xcc, 0x96, 0x82, // "5" -> B=24H (ファ#)
+      0x06, 0x22, 0xfe, 0x06, 0xcc, 0x96, 0x82, // "6" -> B=22H (ソ)
+      0x06, 0x20, 0xfe, 0x07, 0xcc, 0x96, 0x82, // "7" -> B=20H (ソ#)
+      0x06, 0x1e, 0xfe, 0x13, 0xcc, 0x96, 0x82, // READ DECR -> B=1EH (ラ)
+      0x06, 0x1d, 0xfe, 0x08, 0xcc, 0x96, 0x82, // "8" -> B=1DH (ラ#)
+      0x06, 0x1b, 0xfe, 0x09, 0xcc, 0x96, 0x82, // "9" -> B=1BH (シ)
+      0x06, 0x19, 0xfe, 0x0a, 0xcc, 0x96, 0x82, // "A" -> B=19H (ド)
+      0x06, 0x18, 0xfe, 0x0b, 0xcc, 0x96, 0x82, // "B" -> B=18H (ド#)
+      0x06, 0x16, 0xfe, 0x14, 0xcc, 0x96, 0x82, // READ INCR -> B=16H (レ)
+      0x06, 0x15, 0xfe, 0x0c, 0xcc, 0x96, 0x82, // "C" -> B=15H (レ#)
+      0x06, 0x14, 0xfe, 0x0d, 0xcc, 0x96, 0x82, // "D" -> B=14H (ミ)
+      0x06, 0x13, 0xfe, 0x0e, 0xcc, 0x96, 0x82, // "E" -> B=13H (ファ)
+      0x06, 0x12, 0xfe, 0x0f, 0xcc, 0x96, 0x82, // "F" -> B=12H (ファ#)
+      0x06, 0x11, 0xfe, 0x12, 0xcc, 0x96, 0x82, // ADRS SET -> B=11H (ソ)
+      0xaf,                         // XRA A
+      0x32, 0xf3, 0x83,             // STA 83F3H (key flag reset)
+      0xc3, 0x00, 0x82,             // JMP START
+      // SOUND: (0x8296)
+      0xf5,                         // PUSH PSW
+      0x1e, 0x1a,                   // MVI E,1AH
+      0x50,                         // LOOP1: MOV D,B
+      0x3e, 0x02,                   // LOOP2: MVI A,2
+      0xd3, 0x02,                   // OUT 2
+      0x15,                         // DCR D
+      0xc2, 0x9a, 0x82,             // JNZ LOOP2
+      0x50,                         // MOV D,B
+      0xaf,                         // LOOP3: XRA A
+      0xd3, 0x02,                   // OUT 2
+      0x15,                         // DCR D
+      0xc2, 0xa3, 0x82,             // JNZ LOOP3
+      0x1d,                         // DCR E
+      0xc2, 0x99, 0x82,             // JNZ LOOP1
+      0xf1,                         // POP PSW
+      0xc9,                         // RET
+    ];
+    mem.loadBytes(0x8200, program);
+
+    const outputs: number[] = [];
+    const io: IoBus = {
+      output: (port, value) => {
+        expect(port).toBe(2);
+        outputs.push(value);
+      },
+      input: () => 0,
+    };
+    const cpu = new Cpu8080(mem, io);
+    const panel = new TK80Panel(cpu, mem);
+    cpu.pc = 0x8200;
+
+    // "5" key -> B=24H (ファ#, per the CPI 5 branch above). Unlike ch.2/ch.5's WAIT subroutine,
+    // SOUND's own busy-wait re-issues the *same* OUT value on every pass of its D countdown
+    // rather than OUTing once and counting cycles separately - so one half-cycle is B identical
+    // OUT calls back to back, not one. E=1AH such half-cycles (on, off, on, off, ...).
+    const b = 0x24;
+    const e = 0x1a;
+    const perCall = e * 2 * b;
+
+    panel.heldKey.press(0x05);
+    for (let i = 0; i < 200_000 && outputs.length < perCall; i++) cpu.step();
+    expect(outputs.length).toBe(perCall);
+    for (let half = 0; half < e * 2; half++) {
+      const expected = half % 2 === 0 ? 2 : 0;
+      for (let j = 0; j < b; j++) expect(outputs[half * b + j]).toBe(expected);
+    }
+
+    for (let i = 0; i < 200_000 && outputs.length < perCall * 2; i++) cpu.step();
+    expect(outputs.length).toBe(perCall * 2); // still held -> retriggered a second time, unprompted
+
+    panel.heldKey.release(0x05);
+    const countAfterRelease = outputs.length;
+    for (let i = 0; i < 200_000; i++) cpu.step();
+    expect(outputs.length).toBe(countAfterRelease); // released -> back to blocking on KEYIN
+    expect(cpu.pc).toBe(MONITOR_ADDR.KEYIN);
   });
 });
 

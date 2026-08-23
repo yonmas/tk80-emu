@@ -44,6 +44,13 @@ export class Cpu8080 {
   interruptsEnabled = false;
   halted = false;
 
+  /**
+   * Running total of clock cycles executed, for anything that needs to relate CPU time to
+   * real time (e.g. src/organAudio.ts scheduling OUT-driven speaker toggles). Doesn't reset
+   * on reset() - the real crystal oscillator wouldn't either.
+   */
+  cycleCount = 0;
+
   /** Monitor-subroutine stand-ins, keyed by entry address. See MonitorHook's doc comment. */
   monitorHooks?: Map<number, MonitorHook>;
 
@@ -72,10 +79,13 @@ export class Cpu8080 {
     const hook = this.monitorHooks?.get(this.pc);
     if (hook) {
       hook(this);
-      return 17; // roughly a CALL's worth; monitor hooks aren't cycle-timed
+      this.cycleCount += 17; // roughly a CALL's worth; monitor hooks aren't cycle-timed
+      return 17;
     }
     const opcode = this.fetch8();
-    return this.execute(opcode);
+    const cycles = this.execute(opcode);
+    this.cycleCount += cycles;
+    return cycles;
   }
 
   /** Direct memory access for MonitorHook implementations (the monitor's own RAM-mapped state). */
