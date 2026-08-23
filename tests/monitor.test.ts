@@ -3,6 +3,13 @@ import { Cpu8080, type IoBus } from "../src/cpu8080";
 import { Memory } from "../src/memory";
 import { TK80Panel } from "../src/panel";
 import { MONITOR_ADDR } from "../src/monitor";
+import { SAMPLE_PROGRAMS } from "../src/samplePrograms";
+
+function findSample(name: string): number[] {
+  const sample = SAMPLE_PROGRAMS.find((s) => s.name === name);
+  if (!sample) throw new Error(`no sample program named ${name}`);
+  return sample.bytes;
+}
 
 function makePanel(): { cpu: Cpu8080; mem: Memory; panel: TK80Panel } {
   const mem = new Memory();
@@ -65,20 +72,13 @@ describe("monitor: RGDSP (NEC TK-80 ユーザーズ・マニアル IEM-560A, 4.3
 describe("monitor: RGDSP driven by a real application program (NEC TK-80 応用プログラム IEM-561A, ch.1 ディジタル・タイマ)", () => {
   it("counts centiseconds up in BCD while RGDSP mirrors DE onto the panel display, unmodified from the manual", () => {
     const { cpu, mem, panel } = makePanel();
-    // Full object code transcribed from section 1.4. Free-runs forever (JMP COUNT) counting a
-    // BCD clock in BC (hours:minutes) / DE (seconds:centiseconds), calling the real RGDSP entry
-    // point (0x01A1) every pass and a local WAIT subroutine (0x8245, not a monitor call) to pace
-    // it to roughly 1/100s. This is the same program that originally motivated implementing
-    // RGDSP: it hangs without it (an endless string of zeroed-memory NOPs at 0x01A1).
-    // prettier-ignore
-    const program = [
-      0x01, 0x00, 0x00, 0x11, 0x00, 0x00, 0xc5, 0xe1, 0x22, 0xee, 0x83, 0xd5, 0xe1, 0x22, 0xec, 0x83,
-      0xc5, 0xd5, 0xcd, 0xa1, 0x01, 0xcd, 0x45, 0x82, 0xd1, 0xc1, 0x7b, 0xc6, 0x01, 0x27, 0x5f, 0x7a,
-      0xce, 0x00, 0x27, 0xfe, 0x60, 0xca, 0x2c, 0x82, 0x57, 0xc3, 0x06, 0x82, 0x16, 0x00, 0x79, 0xc6,
-      0x01, 0x27, 0xfe, 0x60, 0xca, 0x3b, 0x82, 0x4f, 0xc3, 0x06, 0x82, 0x0e, 0x00, 0x78, 0xc6, 0x01,
-      0x27, 0x47, 0xc3, 0x06, 0x82, 0x16, 0x04, 0x1e, 0xf3, 0x1d, 0xc2, 0x49, 0x82, 0x15, 0xc2, 0x47,
-      0x82, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xc9,
-    ];
+    // Full object code transcribed from section 1.4 - see src/samplePrograms.ts. Free-runs
+    // forever (JMP COUNT) counting a BCD clock in BC (hours:minutes) / DE (seconds:centiseconds),
+    // calling the real RGDSP entry point (0x01A1) every pass and a local WAIT subroutine (0x8245,
+    // not a monitor call) to pace it to roughly 1/100s. This is the same program that originally
+    // motivated implementing RGDSP: it hangs without it (an endless string of zeroed-memory NOPs
+    // at 0x01A1).
+    const program = findSample("第1章 ディジタル・タイマ");
     mem.loadBytes(0x8200, program);
     cpu.pc = 0x8200;
 
@@ -99,56 +99,14 @@ describe("monitor: RGDSP driven by a real application program (NEC TK-80 応用�
 describe("monitor: KEYIN driving a real application program (NEC TK-80 応用プログラム IEM-561A, ch.4 電子オルガン)", () => {
   it("dispatches each pressed key to SOUND with the right on/off pulse shape, and sustains while held", () => {
     const mem = new Memory();
-    // Full object code transcribed from section 4.3, keyed off the real KEYIN entry point
-    // (0x0216) rather than a synthetic harness like the KEYIN/INPUT tests below - this is what
-    // originally motivated implementing KEYIN in the first place. Ch.4 clears the monitor's KEY
-    // FLAG itself (the XRA A / STA 83F3H before JMP START) rather than relying on KEYIN's own
-    // re-report suppression, so a still-held key re-triggers SOUND every pass through the main
-    // loop - that's the mechanism that sustains a note for as long as the key is held.
-    // prettier-ignore
-    const program = [
-      0xcd, 0x16, 0x02,             // CALL KEYIN
-      0x06, 0x33, 0xfe, 0x00, 0xcc, 0x96, 0x82, // "0" -> B=33H (ド)
-      0x06, 0x31, 0xfe, 0x01, 0xcc, 0x96, 0x82, // "1" -> B=31H (ド#)
-      0x06, 0x2d, 0xfe, 0x02, 0xcc, 0x96, 0x82, // "2" -> B=2DH (レ)
-      0x06, 0x2b, 0xfe, 0x03, 0xcc, 0x96, 0x82, // "3" -> B=2BH (レ#)
-      0x06, 0x28, 0xfe, 0x15, 0xcc, 0x96, 0x82, // WRITE INCR -> B=28H (ミ)
-      0x06, 0x26, 0xfe, 0x04, 0xcc, 0x96, 0x82, // "4" -> B=26H (ファ)
-      0x06, 0x24, 0xfe, 0x05, 0xcc, 0x96, 0x82, // "5" -> B=24H (ファ#)
-      0x06, 0x22, 0xfe, 0x06, 0xcc, 0x96, 0x82, // "6" -> B=22H (ソ)
-      0x06, 0x20, 0xfe, 0x07, 0xcc, 0x96, 0x82, // "7" -> B=20H (ソ#)
-      0x06, 0x1e, 0xfe, 0x13, 0xcc, 0x96, 0x82, // READ DECR -> B=1EH (ラ)
-      0x06, 0x1d, 0xfe, 0x08, 0xcc, 0x96, 0x82, // "8" -> B=1DH (ラ#)
-      0x06, 0x1b, 0xfe, 0x09, 0xcc, 0x96, 0x82, // "9" -> B=1BH (シ)
-      0x06, 0x19, 0xfe, 0x0a, 0xcc, 0x96, 0x82, // "A" -> B=19H (ド)
-      0x06, 0x18, 0xfe, 0x0b, 0xcc, 0x96, 0x82, // "B" -> B=18H (ド#)
-      0x06, 0x16, 0xfe, 0x14, 0xcc, 0x96, 0x82, // READ INCR -> B=16H (レ)
-      0x06, 0x15, 0xfe, 0x0c, 0xcc, 0x96, 0x82, // "C" -> B=15H (レ#)
-      0x06, 0x14, 0xfe, 0x0d, 0xcc, 0x96, 0x82, // "D" -> B=14H (ミ)
-      0x06, 0x13, 0xfe, 0x0e, 0xcc, 0x96, 0x82, // "E" -> B=13H (ファ)
-      0x06, 0x12, 0xfe, 0x0f, 0xcc, 0x96, 0x82, // "F" -> B=12H (ファ#)
-      0x06, 0x11, 0xfe, 0x12, 0xcc, 0x96, 0x82, // ADRS SET -> B=11H (ソ)
-      0xaf,                         // XRA A
-      0x32, 0xf3, 0x83,             // STA 83F3H (key flag reset)
-      0xc3, 0x00, 0x82,             // JMP START
-      // SOUND: (0x8296)
-      0xf5,                         // PUSH PSW
-      0x1e, 0x1a,                   // MVI E,1AH
-      0x50,                         // LOOP1: MOV D,B
-      0x3e, 0x02,                   // LOOP2: MVI A,2
-      0xd3, 0x02,                   // OUT 2
-      0x15,                         // DCR D
-      0xc2, 0x9a, 0x82,             // JNZ LOOP2
-      0x50,                         // MOV D,B
-      0xaf,                         // LOOP3: XRA A
-      0xd3, 0x02,                   // OUT 2
-      0x15,                         // DCR D
-      0xc2, 0xa3, 0x82,             // JNZ LOOP3
-      0x1d,                         // DCR E
-      0xc2, 0x99, 0x82,             // JNZ LOOP1
-      0xf1,                         // POP PSW
-      0xc9,                         // RET
-    ];
+    // Full object code transcribed from section 4.3 - see src/samplePrograms.ts, keyed off the
+    // real KEYIN entry point (0x0216) rather than a synthetic harness like the KEYIN/INPUT
+    // tests below - this is what originally motivated implementing KEYIN in the first place.
+    // Ch.4 clears the monitor's KEY FLAG itself (the XRA A / STA 83F3H before JMP START) rather
+    // than relying on KEYIN's own re-report suppression, so a still-held key re-triggers SOUND
+    // every pass through the main loop - that's the mechanism that sustains a note for as long
+    // as the key is held. "5" dispatches to B=24H (ファ#) via the CPI 5 branch.
+    const program = findSample("第4章 電子オルガン");
     mem.loadBytes(0x8200, program);
 
     const outputs: number[] = [];

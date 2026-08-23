@@ -3,6 +3,7 @@ import { Memory } from "./memory";
 import { TK80Panel } from "./panel";
 import { playCmtBlock } from "./cmtAudio";
 import { SpeakerIoBus, CPU_CLOCK_HZ } from "./organAudio";
+import { SAMPLE_PROGRAMS } from "./samplePrograms";
 import { initTutorial } from "./tutorial";
 import { FN_KEY_CODE } from "./monitor";
 
@@ -209,8 +210,31 @@ loaderEl.appendChild(bytesRowEl);
 
 const loadBytesInput = document.createElement("input");
 loadBytesInput.type = "text";
-loadBytesInput.placeholder = "hex bytes, e.g. 3E 05 06 03 80 76";
+loadBytesInput.placeholder = "hex bytes, e.g. 3E 05 06 03 80 76 - or pick a sample below";
 bytesRowEl.appendChild(loadBytesInput);
+
+// same field doubles as free-text entry and a preset picker: typing/pasting bytes directly
+// loads them as-is, while the browser's native datalist dropdown (triggered by the `list`
+// attribute) offers the sample programs below by name. Picking one fills the field with that
+// program's bytes - matched back against SAMPLE_PROGRAMS on "input" below to also set the
+// address field, since a plain <option> can't carry a second value for that.
+const bytesToHex = (bytes: number[]): string => bytes.map((b) => b.toString(16).toUpperCase().padStart(2, "0")).join(" ");
+
+const sampleListEl = document.createElement("datalist");
+sampleListEl.id = "sample-programs";
+for (const sample of SAMPLE_PROGRAMS) {
+  const opt = document.createElement("option");
+  opt.value = bytesToHex(sample.bytes);
+  opt.label = `${sample.name} (${sample.address.toString(16).toUpperCase()}H)`;
+  sampleListEl.appendChild(opt);
+}
+loadBytesInput.setAttribute("list", "sample-programs");
+loadBytesInput.after(sampleListEl);
+
+loadBytesInput.addEventListener("input", () => {
+  const match = SAMPLE_PROGRAMS.find((sample) => bytesToHex(sample.bytes) === loadBytesInput.value);
+  if (match) loadAddrInput.value = match.address.toString(16).toUpperCase();
+});
 
 const loadBtn = document.createElement("button");
 loadBtn.className = "fn";

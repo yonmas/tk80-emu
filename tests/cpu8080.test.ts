@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { Cpu8080, type IoBus } from "../src/cpu8080";
 import { Memory } from "../src/memory";
+import { SAMPLE_PROGRAMS } from "../src/samplePrograms";
+
+function findSample(name: string): number[] {
+  const sample = SAMPLE_PROGRAMS.find((s) => s.name === name);
+  if (!sample) throw new Error(`no sample program named ${name}`);
+  return sample.bytes;
+}
 
 function makeCpu(program: number[], loadAddr = 0): { cpu: Cpu8080; mem: Memory } {
   const mem = new Memory();
@@ -141,20 +148,15 @@ describe("Cpu8080 IN/OUT", () => {
 describe("Cpu8080 real-world program (NEC TK-80 Application Program manual)", () => {
   it("runs the 'electronic siren' program (ch.2) exactly as coded in the manual", () => {
     // Full object code transcribed from NEC's "TK-80 応用プログラム" (IEM-561A), chapter 2
-    // "電子サイレン" (electronic siren), section 2.4 コーディング例. Self-contained - unlike most
-    // of the manual's other sample programs, it doesn't call into the monitor ROM (which this
-    // emulator doesn't include) - it just sweeps a frequency parameter in B down from 0x50 to
-    // 0x40 and back up, OUTing an alternating square wave to port 2, timed by a local WAIT
-    // subroutine. That mix of OUT, DCX/INX B, CPI/JNZ, and a nested CALL/PUSH/DCR/JNZ/POP/RET
-    // subroutine is exactly the shape of code that hid the OUT/IN port-byte-skip bug, so this
-    // is a genuine (not synthetic) regression check against a real published TK-80 program.
-    // prettier-ignore
-    const program = [
-      0x06, 0x50, 0x3e, 0x02, 0xd3, 0x02, 0xcd, 0x33, 0x82, 0x3e, 0x00, 0xd3, 0x02, 0xcd, 0x33, 0x82,
-      0x0b, 0x78, 0xfe, 0x40, 0x47, 0xc2, 0x02, 0x82, 0x06, 0x40, 0x3e, 0x02, 0xd3, 0x02, 0xcd, 0x33,
-      0x82, 0x3e, 0x00, 0xd3, 0x02, 0xcd, 0x33, 0x82, 0x03, 0x78, 0xfe, 0x50, 0x47, 0xc2, 0x1a, 0x82,
-      0xc3, 0x00, 0x82, 0xc5, 0x05, 0xc2, 0x34, 0x82, 0xc1, 0xc9,
-    ];
+    // "電子サイレン" (electronic siren), section 2.4 コーディング例 - see src/samplePrograms.ts.
+    // Self-contained - unlike most of the manual's other sample programs, it doesn't call into
+    // the monitor ROM (which this emulator doesn't include) - it just sweeps a frequency
+    // parameter in B down from 0x50 to 0x40 and back up, OUTing an alternating square wave to
+    // port 2, timed by a local WAIT subroutine. That mix of OUT, DCX/INX B, CPI/JNZ, and a
+    // nested CALL/PUSH/DCR/JNZ/POP/RET subroutine is exactly the shape of code that hid the
+    // OUT/IN port-byte-skip bug, so this is a genuine (not synthetic) regression check against
+    // a real published TK-80 program.
+    const program = findSample("第2章 電子サイレン");
     const mem = new Memory();
     mem.loadBytes(0x8200, program);
     const outputs: { port: number; value: number }[] = [];
@@ -181,28 +183,55 @@ describe("Cpu8080 real-world program (NEC TK-80 Application Program manual)", ()
     outputs.forEach((o, i) => expect(o.value).toBe(i % 2 === 0 ? 2 : 0));
   });
 
-  it("runs the 'automatic music-play' program (ch.5) with a short custom tune", () => {
-    // Full object code transcribed from the same manual, chapter 5 "音楽の自動演奏プログラム"
-    // (automatic music-play program), section 5.4. Also self-contained - no monitor ROM calls.
-    // It reads (pitch, duration) byte pairs from a data table starting at 8250H, plays each
-    // pitch through the same OUT-driven square-wave envelope as chapter 2's SOUND subroutine,
-    // treats a pitch byte with its top bit set as a rest (silence - the WAIT path, no OUT calls
-    // at all), and a pitch byte of 0x00 as "end of song", which loops execution back to START to
-    // replay it. The manual (5.5) leaves the actual tune's bytes up to the user, so the data
-    // below is a short hand-picked tune in its documented format, not itself from the manual.
-    // prettier-ignore
-    const program = [
-      0x21, 0x50, 0x82, 0x7e, 0xa7, 0xca, 0x00, 0x82, 0x23, 0x4e, 0x47, 0x07, 0xda, 0x3c, 0x82, 0xe5,
-      0xcd, 0x1c, 0x82, 0xe1, 0x0d, 0xc2, 0x0f, 0x82, 0x23, 0xc3, 0x03, 0x82, 0x21, 0xff, 0x35, 0x50,
-      0x3e, 0x02, 0xd3, 0x02, 0x2b, 0x7c, 0xa7, 0xc8, 0x15, 0xc2, 0x24, 0x82, 0x50, 0x3e, 0x00, 0xd3,
-      0x02, 0x2b, 0x7c, 0xa7, 0xc8, 0x15, 0xc2, 0x31, 0x82, 0xc3, 0x1f, 0x82, 0xe5, 0x21, 0xff, 0x50,
-      0x2b, 0x7c, 0xa7, 0xc2, 0x40, 0x82, 0x0d, 0xc2, 0x3d, 0x82, 0xe1, 0x23, 0xc3, 0x03, 0x82,
-    ];
+  it("runs the 'programmable metronome' program (ch.3) exactly as coded in the manual", () => {
+    // Full object code transcribed from ch.3 "プログラマブル・メトロノーム" (programmable
+    // metronome), section 3.4 - see src/samplePrograms.ts. Self-contained - alternates a
+    // 1445Hz click (T1, D=35H) and a 1919Hz click (T2, D=26H) through port 2 bit1, exactly like
+    // ch.2's SOUND: a single OUT per half-cycle, timed by a separate DCR-based delay loop
+    // (rather than ch.4's SOUND, which re-issues OUT on every pass of its delay loop).
+    const program = findSample("第3章 プログラマブル・メトロノーム");
     const mem = new Memory();
     mem.loadBytes(0x8200, program);
-    // ド (0x33) for 1 unit, a rest (top bit set) for 1 unit, レ (0x2D) for 1 unit, then the
-    // 0x00 end-of-song sentinel - per the manual's pitch-parameter table (5.5) and format.
-    mem.loadBytes(0x8250, [0x33, 0x01, 0x80, 0x01, 0x2d, 0x01, 0x00]);
+    const outputs: { port: number; value: number; d: number }[] = [];
+    const dValuesUsed = new Set<number>();
+    const io: IoBus = {
+      output: (port, value) => {
+        outputs.push({ port, value, d: cpu.d });
+        dValuesUsed.add(cpu.d);
+      },
+      input: () => 0,
+    };
+    const cpu = new Cpu8080(mem, io);
+    cpu.pc = 0x8200;
+
+    // WAIT (the tempo delay between clicks) is itself a ~4M-cycle busy-wait by design, and
+    // getting from T1 to T2 needs several clicks-plus-waits first (LOOP2 runs while L, seeded
+    // from the beat count at 8251H, counts down) - so this needs a generous step budget, not a
+    // small one, even though it's still a handful of milliseconds of real (non-audio) test time.
+    for (let i = 0; i < 20_000_000 && dValuesUsed.size < 2; i++) cpu.step();
+
+    expect(outputs.length).toBeGreaterThan(0);
+    expect(outputs.every((o) => o.port === 2)).toBe(true);
+    // each pulse cycle is a "2" (tone on) immediately followed by a "0" (tone off)
+    outputs.forEach((o, i) => expect(o.value).toBe(i % 2 === 0 ? 2 : 0));
+    // both T1 (D=35H, 1445Hz) and T2 (D=26H, 1919Hz) get exercised
+    expect(dValuesUsed).toEqual(new Set([0x35, 0x26]));
+  });
+
+  it("runs the 'automatic music-play' program (ch.5) with a short custom tune", () => {
+    // Full object code transcribed from the same manual, chapter 5 "音楽の自動演奏プログラム"
+    // (automatic music-play program), section 5.4 - see src/samplePrograms.ts. Also
+    // self-contained - no monitor ROM calls. It reads (pitch, duration) byte pairs from a data
+    // table starting at 8250H, plays each pitch through the same OUT-driven square-wave
+    // envelope as chapter 2's SOUND subroutine, treats a pitch byte with its top bit set as a
+    // rest (silence - the WAIT path, no OUT calls at all), and a pitch byte of 0x00 as "end of
+    // song", which loops execution back to START to replay it. The manual (5.5) leaves the
+    // actual tune's bytes up to the user, so the data table (ド for 1 unit, a rest, レ for 1
+    // unit, then the end-of-song sentinel) is a short hand-picked tune, not itself from the
+    // manual - it's contiguous with the program (one pad byte at 0x824F) so both load as one block.
+    const program = findSample("第5章 音楽の自動演奏プログラム");
+    const mem = new Memory();
+    mem.loadBytes(0x8200, program);
 
     // Each CALL to SOUND restarts its own on/off cycle independent of where the *previous* call
     // happened to end (SOUND can RZ out mid-cycle, on either polarity), so two "on" pulses can
