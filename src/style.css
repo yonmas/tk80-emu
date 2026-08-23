@@ -248,6 +248,9 @@ button {
   color: var(--paper);
   cursor: pointer;
   font-size: 15px;
+  /* prevents mobile Safari/Chrome from treating a fast double-tap on the same key
+     (e.g. "0" "0") as a double-tap-to-zoom gesture, without disabling pinch-zoom */
+  touch-action: manipulation;
   box-shadow: 0 1px 0 rgba(255, 255, 255, 0.08) inset, 0 1px 2px rgba(0, 0, 0, 0.4);
 }
 
