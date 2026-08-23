@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { Cpu8080 } from "../src/cpu8080";
 import { Memory } from "../src/memory";
-import { TK80Panel } from "../src/panel";
+import { TK80Panel, buildCmtBlock, encodeCmtByte } from "../src/panel";
 
 function makePanel(): { panel: TK80Panel; mem: Memory; cpu: Cpu8080 } {
   const mem = new Memory();
@@ -150,5 +150,41 @@ describe("TK80Panel STORE DATA / LOAD DATA (cassette stand-in via localStorage)"
     const { panel } = makePanel();
     panel.pressLoadData();
     expect(panel.state.loadError).toBe(true);
+  });
+
+  it("fires onStoreData/onLoadData with the real CMT block bytes", () => {
+    installMemoryStorage();
+    const { panel, mem } = makePanel();
+    mem.loadBytes(0x9000, [0x11, 0x22]);
+    panel.address = 0x9000;
+    panel.dataRegister = 0x9001;
+
+    let stored: number[] | undefined;
+    panel.onStoreData = (block) => (stored = block);
+    panel.pressStoreData();
+    expect(stored).toEqual(buildCmtBlock(0x9000, 0x9001, [0x11, 0x22]));
+
+    let loaded: number[] | undefined;
+    const { panel: panel2 } = makePanel();
+    panel2.onLoadData = (block) => (loaded = block);
+    panel2.pressLoadData();
+    expect(loaded).toEqual(stored);
+  });
+});
+
+// Reproduces the manual's own worked example (ch. 6.2, fig. 6-1: "23（16進）")
+// and its transfer-block layout (ch. 6.3, fig. 6-2).
+describe("CMT (cassette) block encoding", () => {
+  it("encodes a byte as start bit, 8 data bits LSB-first, 3 stop bits", () => {
+    // 0x23 = 0010 0011 -> LSB-first: 1,1,0,0,0,1,0,0
+    expect(encodeCmtByte(0x23)).toEqual([0, 1, 1, 0, 0, 0, 1, 0, 0, 1, 1, 1]);
+  });
+
+  it("builds a transfer block with an address header and a trailing checksum", () => {
+    const block = buildCmtBlock(0x8000, 0x8002, [0x01, 0x02, 0x03]);
+    expect(block.slice(0, 4)).toEqual([0x80, 0x00, 0x80, 0x02]);
+    expect(block.slice(4, 7)).toEqual([0x01, 0x02, 0x03]);
+    const sum = block.slice(0, 7).reduce((a, b) => (a + b) & 0xff, 0);
+    expect(block[7]).toBe(sum);
   });
 });

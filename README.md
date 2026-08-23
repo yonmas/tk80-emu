@@ -14,7 +14,8 @@
 
 - 実機の **モニターROMは同梱していません**（NECの著作物のため）。かわりにフロントパネルの操作ロジック自体をTypeScriptで実装しており、これが「モニタープログラム」の代わりになっています。
 - 表示は実機同様「アドレス4桁＋データレジスタ4桁」の8桁7セグメントLEDです。データレジスタは実機と同じく16ビットのシフトレジスタで、ADRS SET/READ INCR/READ DECR/WRITE INCRのたびに下位バイトが上位2桁へシフトし、新しく読んだ1バイトが下位2桁に入ります（NECのTK-80ユーザーズマニュアル 3.6.3〜3.6.4節の記載どおり）。
-- ボタン名・配置は実機のキー配置（上段: `RET` `RUN` `STORE DATA` `LOAD DATA` `RESET`、テンキー右列: `ADRS SET` `READ INCR` `READ DECR` `WRITE INCR`）に合わせています。`STORE DATA` / `LOAD DATA` は実機のカセットテープ・インタフェースの代わりに、ブラウザの localStorage への保存・読込として再実装しています（音声変換は行わず、[アドレス, データ]範囲のメモリをそのまま保存・復元します）。
+- ボタン名・配置は実機のキー配置（上段: `RET` `RUN` `STORE DATA` `LOAD DATA` `RESET`、テンキー右列: `ADRS SET` `READ INCR` `READ DECR` `WRITE INCR`）に合わせています。`STORE DATA` / `LOAD DATA` は実機のカセットテープ・インタフェースの代わりに、ブラウザの localStorage への保存・読込として再実装しています（[アドレス, データ]範囲のメモリをそのまま保存・復元します）。転送するバイト列は、実機のCMTインタフェース（マニュアル第6章）が実際に鳴らす音——1ワード12ビット（スタートビット・8データビット・3ストップビット）を110ボーで、数KHzのキャリアにON/OFFキーイングした音——として Web Audio API で再生します。
+- 実機の「モニターROM」自体は先述のとおり同梱していませんが、CMT（カセット）インタフェースのデータフォーマットと転送ブロック構成（第6.2〜6.3節）はマニュアル記載どおりに実装しています。
 - CPUは Intel 8080 の全256オペコード（未定義複製含む）を実装済みです。フラグ計算はおおむね正確ですが、減算系命令のACフラグの極性など一部曖昧な仕様は慣例的な実装に倣っています（実機ソフトウェアがそこに依存することはほぼありません）。
 
 ## 使い方
@@ -33,7 +34,7 @@ npm run dev
 3. 16進キーで2桁のデータを入力 → **WRITE INCR** でそのアドレスにバイトを書き込み、次のアドレスへ進みます（連続入力しやすいよう自動で進みます）
 4. **READ INCR / READ DECR** で次/前のアドレスへ移動して読み込み
 5. **MODE** で AUTO / STEP を切り替え。AUTOなら **RUN** で現在のアドレスから自由実行（`HLT` で自動停止）。STEPなら **RUN** で1命令だけ実行してPC/A/フラグを表示し、続けて **RET** を押すごとに次の1命令ずつ進められます
-6. **STORE DATA** で現在の[アドレス, データ]範囲のメモリをブラウザに保存、**LOAD DATA** で読み戻し（実機のカセットテープの代わり）
+6. **STORE DATA** で現在の[アドレス, データ]範囲のメモリをブラウザに保存、**LOAD DATA** で読み戻し（実機のカセットテープの代わり）。実機のカセット・インタフェースの音が鳴ります
 
 パネル下の操作説明カードは右上の **ENG/JP** ボタンで英語・日本語を切り替えられます。
 
@@ -47,7 +48,8 @@ npm run dev
 
 - `src/memory.ts` — 64KBのメモリバス
 - `src/cpu8080.ts` — Intel 8080 CPUコア（レジスタ、フラグ、全命令）
-- `src/panel.ts` — TK-80フロントパネルの状態機械（アドレスレジスタ/データレジスタ、ADRS SET、READ INCR/DECR、WRITE INCR、RUN/RET、MODE(AUTO/STEP)、RESET、STORE DATA/LOAD DATA）
+- `src/panel.ts` — TK-80フロントパネルの状態機械（アドレスレジスタ/データレジスタ、ADRS SET、READ INCR/DECR、WRITE INCR、RUN/RET、MODE(AUTO/STEP)、RESET、STORE DATA/LOAD DATA、CMTブロックのエンコード）
+- `src/cmtAudio.ts` — STORE DATA/LOAD DATA時に実機のカセット・インタフェースの音をWeb Audio APIで再生
 - `src/main.ts` / `src/style.css` — 7セグメント表示・16進キーパッドのUI
 
 ## テスト

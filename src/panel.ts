@@ -24,6 +24,33 @@ function bytesToBase64(bytes: number[]): string {
 }
 
 /**
+ * Encodes one byte as the real CMT (cassette) interface's 12-bit serial word (NEC
+ * TK-80 User's Manual ch. 6.2, fig. 6-1): a start bit (0), then 8 data bits LSB
+ * first, then 3 stop bits (1). "1" is high level, "0" is low level.
+ */
+export function encodeCmtByte(byte: number): number[] {
+  const bits = [0];
+  for (let i = 0; i < 8; i++) bits.push((byte >> i) & 1);
+  bits.push(1, 1, 1);
+  return bits;
+}
+
+/**
+ * Builds one CMT transfer block (ch. 6.3, fig. 6-2): a 4-byte start/end address
+ * header (HI, LO each), the data bytes, then a trailing checksum. NEC's exact
+ * checksum algorithm isn't shown in the pages of the manual we have; this uses a
+ * plain 8-bit sum, which only shapes the STORE/LOAD DATA sound effect here rather
+ * than verifying data integrity.
+ */
+export function buildCmtBlock(start: number, end: number, bytes: number[]): number[] {
+  const block = [(start >> 8) & 0xff, start & 0xff, (end >> 8) & 0xff, end & 0xff, ...bytes];
+  let checksum = 0;
+  for (const b of block) checksum = (checksum + b) & 0xff;
+  block.push(checksum);
+  return block;
+}
+
+/**
  * Re-creates the TK-80 front panel's ADRS SET / hex keys / WRITE INCR / READ
  * INCR/DECR / RUN / RET / RESET / STORE DATA / LOAD DATA workflow on top of a
  * plain 8080 + memory. There is no real TK-80 monitor ROM here (it's NEC's
@@ -47,8 +74,10 @@ function bytesToBase64(bytes: number[]): string {
  *
  * STORE DATA / LOAD DATA write/read the [AR, DR] memory range to/from
  * localStorage as a single "cassette" slot, standing in for the real
- * machine's audio-cassette interface (no audio en/decoding here, just the
- * same "save this block, load it back with its address" behavior).
+ * machine's audio-cassette interface. onStoreData/onLoadData additionally
+ * fire with the real CMT block bytes (see buildCmtBlock) so a caller can
+ * play the actual cassette-interface tone (ch. 6) - that part is optional
+ * and browser-only, so it's a plain callback rather than baked in here.
  */
 export class TK80Panel {
   address = 0;
@@ -56,6 +85,8 @@ export class TK80Panel {
   running = false;
   mode: RunMode = "auto";
   loadError = false;
+  onStoreData?: (block: number[]) => void;
+  onLoadData?: (block: number[]) => void;
 
   constructor(
     private cpu: Cpu8080,
@@ -152,6 +183,7 @@ export class TK80Panel {
     if (end < start) return;
     const bytes: number[] = [];
     for (let a = start; a <= end; a++) bytes.push(this.bus.read8(a & 0xffff));
+    this.onStoreData?.(buildCmtBlock(start, end, bytes));
     try {
       localStorage.setItem(CASSETTE_KEY, JSON.stringify({ start, end, data: bytesToBase64(bytes) }));
     } catch {
@@ -167,12 +199,16 @@ export class TK80Panel {
       if (!raw) throw new Error("no cassette data");
       const saved = JSON.parse(raw) as { start: number; end: number; data: string };
       const bytes = atob(saved.data);
+      const byteValues: number[] = [];
       for (let i = 0; i < bytes.length; i++) {
-        this.bus.write8((saved.start + i) & 0xffff, bytes.charCodeAt(i));
+        const b = bytes.charCodeAt(i);
+        this.bus.write8((saved.start + i) & 0xffff, b);
+        byteValues.push(b);
       }
       this.address = saved.start;
       this.dataRegister = saved.end;
       this.loadError = false;
+      this.onLoadData?.(buildCmtBlock(saved.start, saved.end, byteValues));
     } catch {
       this.loadError = true;
     }

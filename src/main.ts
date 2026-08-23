@@ -1,6 +1,7 @@
 import { Cpu8080 } from "./cpu8080";
 import { Memory } from "./memory";
 import { TK80Panel } from "./panel";
+import { playCmtBlock } from "./cmtAudio";
 
 const SEGMENT_MAP: Record<string, string[]> = {
   "0": ["a", "b", "c", "d", "e", "f"],
@@ -58,6 +59,8 @@ const app = document.getElementById("app")!;
 const memory = new Memory();
 const cpu = new Cpu8080(memory);
 const panel = new TK80Panel(cpu, memory);
+panel.onStoreData = playCmtBlock;
+panel.onLoadData = playCmtBlock;
 
 app.innerHTML = "";
 
