@@ -151,24 +151,34 @@ const modeBtn = makeFnButton(keygridEl, `MODE ${panel.mode.toUpperCase()}`, () =
 });
 modeBtn.className = "fn mode";
 
+// "load @" sits on its own row above the address field, and the hex-byte field plus
+// Load button share the row below - splitting what used to be one cramped row (which
+// overflowed on narrow/mobile screens) into two that each fit comfortably.
 const loaderEl = document.createElement("div");
 loaderEl.className = "loader";
 caseEl.appendChild(loaderEl);
 
+const addrRowEl = document.createElement("div");
+addrRowEl.className = "loader-row";
+loaderEl.appendChild(addrRowEl);
+
 const loaderLabel = document.createElement("label");
 loaderLabel.textContent = "load @";
-loaderEl.appendChild(loaderLabel);
+addrRowEl.appendChild(loaderLabel);
 
 const loadAddrInput = document.createElement("input");
 loadAddrInput.type = "text";
 loadAddrInput.value = "8000";
-loadAddrInput.style.maxWidth = "70px";
-loaderEl.appendChild(loadAddrInput);
+addrRowEl.appendChild(loadAddrInput);
+
+const bytesRowEl = document.createElement("div");
+bytesRowEl.className = "loader-row";
+loaderEl.appendChild(bytesRowEl);
 
 const loadBytesInput = document.createElement("input");
 loadBytesInput.type = "text";
 loadBytesInput.placeholder = "hex bytes, e.g. 3E 05 06 03 80 76";
-loaderEl.appendChild(loadBytesInput);
+bytesRowEl.appendChild(loadBytesInput);
 
 const loadBtn = document.createElement("button");
 loadBtn.className = "fn";
@@ -185,16 +195,16 @@ loadBtn.addEventListener("click", () => {
   panel.address = addr;
   panel.dataRegister = memory.read8(addr);
 });
-loaderEl.appendChild(loadBtn);
+bytesRowEl.appendChild(loadBtn);
 
 const hintEl = document.createElement("div");
 hintEl.className = "hint";
 hintEl.textContent =
-  "The real monitor ROM isn't included here (it's NEC's copyrighted firmware). ADRS SET → four hex digits → " +
-  "two hex digits → WRITE INCR stores a byte and advances to the next address. In AUTO mode RUN free-runs to HLT; " +
-  "in STEP mode RUN executes one instruction and shows PC/A/flags, and RET keeps stepping. STORE DATA / LOAD DATA " +
-  "save and restore the [address, data] memory range via the browser's local storage, standing in for the real " +
-  "machine's cassette interface. Use the load @ field below to load a program directly at an address for testing.";
+  "ADRS SET → four hex digits → two hex digits → WRITE INCR stores a byte and advances to the next address. " +
+  "In AUTO mode RUN free-runs to HLT; in STEP mode RUN executes one instruction and shows PC/A/flags, and RET " +
+  "keeps stepping. STORE DATA / LOAD DATA save and restore the [address, data] memory range via the browser's " +
+  "local storage, standing in for the real machine's cassette interface. Use the load @ field below to load a " +
+  "program directly at an address for testing.";
 caseEl.appendChild(hintEl);
 
 function render(): void {

@@ -4,8 +4,7 @@
   --pcb-hi: #1b4a30;
   --pcb-bright: #276b45;
   --pcb-bright-hi: #327d53;
-  --card: #2c2b2d;
-  --bezel: #12100e;
+  --panel-gradient: linear-gradient(180deg, var(--pcb-hi), var(--pcb) 40%);
   --key-size: 56px;
   --ember: #ff4433;
   --ember-dim: #3d1613;
@@ -102,7 +101,7 @@ body {
 }
 
 .case {
-  background: linear-gradient(180deg, var(--pcb-hi), var(--pcb) 40%);
+  background: var(--panel-gradient);
   border-radius: 14px;
   padding: 22px;
   box-shadow:
@@ -263,6 +262,12 @@ button {
   text-align: center;
 }
 
+/* the real keycaps print hex digits large and bold, not a plain body-text weight */
+.keygrid button:not(.fn) {
+  font-size: 24px;
+  font-weight: 700;
+}
+
 @media (prefers-reduced-motion: no-preference) {
   button {
     transition: background 100ms ease, transform 60ms ease;
@@ -293,16 +298,29 @@ button.fn:hover {
   background: var(--fn-key-hi);
 }
 
+/* two rows - "load @" + the address field above, the hex-byte field + Load button
+   below - rather than one row of 4 items, which overflowed on narrow screens. */
 .loader {
   display: flex;
+  flex-direction: column;
   gap: 8px;
-  align-items: center;
   font-family: var(--font-mono);
   font-size: 12.5px;
 }
 
+.loader-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
 .loader label {
   color: var(--slate);
+  white-space: nowrap;
+}
+
+.loader-row:first-child input[type="text"] {
+  width: 90px;
 }
 
 .loader input[type="text"] {
@@ -331,7 +349,7 @@ button.fn:hover {
 /* --- manual: static page chrome around the device --- */
 
 .manual {
-  background: var(--card);
+  background: var(--panel-gradient);
   border-radius: 10px;
   padding: 20px 22px;
   box-shadow: 0 1px 0 rgba(255, 255, 255, 0.05) inset;
