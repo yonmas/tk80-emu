@@ -583,11 +583,15 @@ export function initTutorial(): void {
     return state.kind === "menu" ? UI[lang].exit : UI[lang].menu;
   }
 
+  function stepCountLabel(n: number): string {
+    return lang === "ja" ? `（${n}ステップ）` : `(${n} step${n === 1 ? "" : "s"})`;
+  }
+
   function renderMenu(): string {
     const links = sections()
       .map(
         (section, i) =>
-          `<li><button type="button" class="fn" data-action="goto-section" data-section="${i}">${section.title}</button></li>`,
+          `<li><button type="button" class="fn" data-action="goto-section" data-section="${i}">${section.title} ${stepCountLabel(section.steps.length)}</button></li>`,
       )
       .join("");
     return `
