@@ -1,13 +1,15 @@
 :root {
   --void: #0a0a0b;
-  --case: #313031;
-  --case-hi: #403f41;
-  --bezel: #161519;
+  --pcb: #10301f;
+  --pcb-hi: #1b4a30;
+  --card: #2c2b2d;
+  --bezel: #12100e;
   --ember: #ff4433;
   --ember-dim: #3d1613;
-  --key: #47464a;
-  --key-hi: #57565a;
-  --fn-key: #605f64;
+  --key: #5c9c7f;
+  --key-hi: #6fb492;
+  --fn-key: #d98a35;
+  --fn-key-hi: #e59a45;
   --paper: #ece9e4;
   --slate: #98959c;
   --good: #52c26b;
@@ -105,7 +107,7 @@ body {
 }
 
 .case {
-  background: linear-gradient(180deg, var(--case-hi), var(--case) 40%);
+  background: linear-gradient(180deg, var(--pcb-hi), var(--pcb) 40%);
   border-radius: 14px;
   padding: 22px;
   box-shadow:
@@ -120,6 +122,7 @@ body {
   padding: 18px 22px;
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 18px;
   margin-bottom: 18px;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5) inset;
@@ -220,11 +223,21 @@ body {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   gap: 8px;
-  margin-bottom: 8px;
+  margin-bottom: 16px;
+}
+
+/* not one of the real board's 25 keys - it's the separate MODE toggle switch,
+   so it lives outside the key grid entirely rather than crowding into it. */
+.mode-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 16px;
 }
 
 button.fn.mode {
-  margin-bottom: 16px;
+  width: auto;
+  padding-left: 16px;
+  padding-right: 16px;
   background: var(--bezel);
   color: var(--slate);
   box-shadow: 0 1px 0 rgba(255, 255, 255, 0.05) inset;
@@ -290,9 +303,10 @@ button.fn {
   font-size: 11.5px;
   font-family: var(--font-mono);
   letter-spacing: 0.03em;
+  line-height: 1.35;
 }
 button.fn:hover {
-  background: #6d6c71;
+  background: var(--fn-key-hi);
 }
 
 .loader {
@@ -333,7 +347,7 @@ button.fn:hover {
 /* --- manual: static page chrome around the device --- */
 
 .manual {
-  background: var(--case);
+  background: var(--card);
   border-radius: 10px;
   padding: 20px 22px;
   box-shadow: 0 1px 0 rgba(255, 255, 255, 0.05) inset;

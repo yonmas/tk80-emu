@@ -79,6 +79,10 @@ const displayEl = document.createElement("div");
 displayEl.className = "display";
 caseEl.appendChild(displayEl);
 
+const statusEl = document.createElement("div");
+statusEl.className = "status";
+displayEl.appendChild(statusEl);
+
 const addressGroup = document.createElement("div");
 addressGroup.className = "digits group-gap";
 const addressDigits = [0, 1, 2, 3].map(() => new SevenSegDigit());
@@ -91,14 +95,11 @@ const dataDigits = [0, 1, 2, 3].map(() => new SevenSegDigit());
 dataDigits.forEach((d) => dataGroup.appendChild(d.el));
 displayEl.appendChild(dataGroup);
 
-const statusEl = document.createElement("div");
-statusEl.className = "status";
-displayEl.appendChild(statusEl);
-
 function makeFnButton(parent: HTMLElement, label: string, onClick: () => void): HTMLButtonElement {
   const btn = document.createElement("button");
   btn.className = "fn";
-  btn.textContent = label;
+  // the real key caps print two-word labels on two lines (e.g. "ADRS" / "SET")
+  btn.innerHTML = label.includes(" ") ? label.replace(" ", "<br>") : label;
   btn.addEventListener("click", onClick);
   parent.appendChild(btn);
   return btn;
@@ -114,14 +115,6 @@ makeFnButton(topKeysEl, "RUN", () => panel.pressRun());
 makeFnButton(topKeysEl, "STORE DATA", () => panel.pressStoreData());
 makeFnButton(topKeysEl, "LOAD DATA", () => panel.pressLoadData());
 makeFnButton(topKeysEl, "RESET", () => panel.pressReset());
-
-// MODE switch: AUTO free-runs to HLT, STEP executes one instruction per RUN/RET press
-const modeBtn = makeFnButton(topKeysEl, "", () => {
-  panel.toggleMode();
-  modeBtn.textContent = `MODE: ${panel.mode.toUpperCase()}`;
-});
-modeBtn.className = "fn mode";
-modeBtn.textContent = `MODE: ${panel.mode.toUpperCase()}`;
 
 // keypad row: hex keys on the left, the remaining function keys in a column to their right
 const keypadRowEl = document.createElement("div");
@@ -148,6 +141,20 @@ makeFnButton(rightFnKeysEl, "ADRS SET", () => panel.pressAdrsSet());
 makeFnButton(rightFnKeysEl, "READ INCR", () => panel.pressIncr());
 makeFnButton(rightFnKeysEl, "READ DECR", () => panel.pressDecr());
 makeFnButton(rightFnKeysEl, "WRITE INCR", () => panel.pressWrite());
+
+// MODE switch: AUTO free-runs to HLT, STEP executes one instruction per RUN/RET press.
+// Not one of the real board's 25 keys - it's a separate toggle switch - so it sits
+// outside the key grid rather than in it.
+const modeRowEl = document.createElement("div");
+modeRowEl.className = "mode-row";
+caseEl.appendChild(modeRowEl);
+
+const modeBtn = makeFnButton(modeRowEl, "", () => {
+  panel.toggleMode();
+  modeBtn.textContent = `MODE: ${panel.mode.toUpperCase()}`;
+});
+modeBtn.className = "fn mode";
+modeBtn.textContent = `MODE: ${panel.mode.toUpperCase()}`;
 
 const loaderEl = document.createElement("div");
 loaderEl.className = "loader";
