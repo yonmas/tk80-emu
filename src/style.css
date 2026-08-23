@@ -244,7 +244,7 @@ body {
    reads as a note added on top rather than part of the printed label itself. */
 .stop-note {
   position: absolute;
-  bottom: 4px;
+  bottom: 9px;
   right: 3px;
   font-family: "Permanent Marker", cursive;
   font-size: 10px;
