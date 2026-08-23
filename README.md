@@ -2,6 +2,8 @@
 
 ブラウザで動く NEC TK-80 風エミュレーターです。CPUコアは Intel 8080 の全命令をTypeScriptで実装し、その上に TK-80 のフロントパネル操作（アドレス設定・16進キー入力・書き込み・実行）を再現しています。
 
+**公開版: https://yonmas.github.io/tk80-emu/**（ブラウザで直接開けます、インストール不要）
+
 ## これは何か / 何でないか
 
 - 実機の **モニターROMは同梱していません**（NECの著作物のため）。かわりにフロントパネルの操作ロジック自体をTypeScriptで実装しており、これが「モニタープログラム」の代わりになっています。
@@ -45,3 +47,11 @@ npm test
 ```
 
 `tests/cpu8080.test.ts` にCPUコアの単体テスト（算術演算・フラグ・分岐・スタック・DAA）があります。
+
+## ライセンス
+
+MIT — [LICENSE](LICENSE) を参照してください。
+
+---
+
+Built with [Claude Code](https://claude.com/claude-code).

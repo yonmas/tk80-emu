@@ -2,6 +2,12 @@
   "name": "tk80-emu",
   "version": "0.1.0",
   "private": true,
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yonmas/tk80-emu.git"
+  },
+  "homepage": "https://yonmas.github.io/tk80-emu/",
   "type": "module",
   "scripts": {
     "dev": "vite",
