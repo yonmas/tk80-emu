@@ -52,12 +52,14 @@ body {
   gap: 6px;
 }
 
+/* text is written pre-capitalized in the markup rather than via text-transform:
+   uppercase, since that would also uppercase the µ in "µCOM-80" into Greek capital
+   Mu - which almost every font renders identically to a Latin "M". */
 .eyebrow {
   margin: 0;
   font-family: var(--font-mono);
   font-size: 12px;
   letter-spacing: 0.14em;
-  text-transform: uppercase;
   color: var(--slate);
 }
 
