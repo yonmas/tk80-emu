@@ -2,6 +2,7 @@ import { Cpu8080 } from "./cpu8080";
 import { Memory } from "./memory";
 import { TK80Panel } from "./panel";
 import { playCmtBlock } from "./cmtAudio";
+import { initTutorial } from "./tutorial";
 
 const SEGMENT_MAP: Record<string, string[]> = {
   "0": ["a", "b", "c", "d", "e", "f"],
@@ -209,6 +210,8 @@ langToggleBtn?.addEventListener("click", () => {
   manualEnEl?.toggleAttribute("hidden");
   manualJaEl?.toggleAttribute("hidden");
 });
+
+initTutorial();
 
 function render(): void {
   const s = panel.state;

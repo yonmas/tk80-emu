@@ -342,6 +342,199 @@ button.fn:hover {
   outline-offset: 1px;
 }
 
+/* --- tutorial: step-by-step walkthrough, directly under the device. It only ever
+   displays instructions - it never touches the panel - so paging through it leaves
+   whatever the visitor has done on the real controls untouched. --- */
+
+.tutorial {
+  background: var(--panel-gradient);
+  border-radius: 10px;
+  padding: 20px 22px;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.05) inset;
+}
+
+.tutorial-head {
+  margin-bottom: 12px;
+}
+
+.tutorial h2 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--paper);
+}
+
+/* --- collapsed / table-of-contents states --- */
+
+.tutorial-intro {
+  margin: 0 0 12px;
+  font-size: 13.5px;
+  color: var(--paper);
+  line-height: 1.6;
+}
+
+.tutorial-toc {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tutorial-toc button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  font-size: 13px;
+  padding: 10px 14px;
+}
+
+/* --- step state --- */
+
+.tutorial-progress {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--slate);
+  margin-bottom: 6px;
+}
+
+.tutorial-body h3 {
+  margin: 0 0 10px;
+  font-size: 15px;
+  color: var(--paper);
+}
+
+.tutorial-body p {
+  margin: 0 0 12px;
+  font-size: 13.5px;
+  color: var(--paper);
+  line-height: 1.6;
+}
+
+.tutorial-body strong {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  color: var(--ember);
+}
+
+.tutorial-body code {
+  font-family: var(--font-mono);
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+  padding: 1px 5px;
+}
+
+.tutorial-subhead {
+  margin: 0 0 8px !important;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--slate);
+}
+
+.tutorial-copy-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 13px;
+  color: var(--paper);
+}
+
+.tutorial-copy-text {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+}
+
+.tutorial-copy-btn {
+  font: inherit;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  background: var(--pcb-bright);
+  color: var(--paper);
+  border: none;
+  border-radius: 5px;
+  padding: 4px 10px;
+  cursor: pointer;
+  min-width: 4.5em;
+}
+.tutorial-copy-btn:hover {
+  background: var(--pcb-bright-hi);
+}
+
+.tutorial-actions {
+  list-style: none;
+  margin: 0 0 14px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tutorial-actions li {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 6px;
+  padding: 8px 10px;
+}
+
+.tutorial-key {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--ember);
+}
+
+.tutorial-fn {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--slate);
+}
+
+.tutorial-result {
+  font-size: 13px;
+  color: var(--paper);
+}
+
+.tutorial-note {
+  margin: 0;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--slate);
+  line-height: 1.6;
+}
+
+.tutorial-nav {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.tutorial-nav button {
+  flex: 1;
+  width: auto;
+}
+
+.tutorial-nav button:disabled {
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.tutorial-nav button[data-action="exit"] {
+  background: var(--pcb-bright);
+}
+.tutorial-nav button[data-action="exit"]:hover {
+  background: var(--pcb-bright-hi);
+}
+
 /* --- manual: static page chrome around the device --- */
 
 .manual {
