@@ -7,7 +7,6 @@
   --panel-gradient: linear-gradient(180deg, var(--pcb-hi), var(--pcb) 40%);
   --key-size: 56px;
   --ember: #ff4433;
-  --ember-dim: #3d1613;
   --key: #5c9c7f;
   --key-hi: #6fb492;
   --fn-key: #d98a35;
@@ -143,7 +142,7 @@ body {
 
 .seg {
   position: absolute;
-  background: var(--ember-dim);
+  background: var(--pcb-hi);
 }
 
 @media (prefers-reduced-motion: no-preference) {
