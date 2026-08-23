@@ -278,4 +278,57 @@ describe("Cpu8080 real-world program (NEC TK-80 Application Program manual)", ()
     // (0x80, top bit set) never triggers OUT at all
     expect(pitchesUsed).toEqual(new Set([0x33, 0x2d]));
   });
+
+  it("runs the 'infinite scale' program (ch.6) exactly as coded in the manual", () => {
+    // Full object code transcribed from ch.6 "無限音階プログラム" (infinite scale), section 6.4 -
+    // see src/samplePrograms.ts. Self-contained - OUTs a never-reset 8-bit counter to port B
+    // (1) on a fixed cadence per note; bit i of that raw counter naturally toggles at half bit
+    // (i-1)'s rate, so the byte alone carries all 8 octaves (6.1/6.5) with no per-bit logic in
+    // the program itself.
+    const program = findSample("第6章 無限音階プログラム");
+    const mem = new Memory();
+    mem.loadBytes(0x8200, program);
+    // Plain conditionals rather than expect() inside the hot per-OUT callback/loop below - this
+    // runs ~500,000 times for one lap, and vitest's assertion overhead at that volume is what
+    // was actually making this test slow, not the interpreter itself (confirmed separately: the
+    // interpreter alone does 5,000,000 steps in ~220ms).
+    let outCount = 0;
+    let lastValue = -1; // sentinel: no note-port OUT seen yet
+    let badPort = -1;
+    let wraparoundBreakAt = -1;
+    const io: IoBus = {
+      output: (port, value) => {
+        // the one-time PPI mode-set (OUT 03H, 90H) at the very start; every note write goes to
+        // port 1 (port B's data register)
+        if (port !== 1 && port !== 3) badPort = port;
+        if (port !== 1) return;
+        // the counter free-runs and is never reset, so every OUT should be exactly the last
+        // value + 1 (mod 256) - this is the entire mechanism that produces the 8-octave stack,
+        // so it's the one property worth checking across the whole run rather than a handful
+        // of samples.
+        if (lastValue !== -1 && value !== ((lastValue + 1) & 0xff) && wraparoundBreakAt === -1) {
+          wraparoundBreakAt = outCount;
+        }
+        lastValue = value;
+        outCount++;
+      },
+      input: () => 0,
+    };
+    const cpu = new Cpu8080(mem, io);
+    cpu.pc = 0x8200;
+
+    // one lap through all 8 notes is ~250,000 OUT calls (each note's DE constant is roughly how
+    // many); run until PC reaches ST+4 (8204H) a second time, proving the whole note sequence
+    // completed and the manual's own tail loop (JMP ST+4, skipping the one-time PPI setup) works.
+    let st4Visits = 0;
+    for (let i = 0; i < 30_000_000 && st4Visits < 2; i++) {
+      if (cpu.pc === 0x8204) st4Visits++;
+      cpu.step();
+    }
+
+    expect(badPort).toBe(-1);
+    expect(st4Visits).toBe(2);
+    expect(outCount).toBeGreaterThan(200_000);
+    expect(wraparoundBreakAt).toBe(-1);
+  });
 });

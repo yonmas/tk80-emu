@@ -1,8 +1,9 @@
-import { Cpu8080 } from "./cpu8080";
+import { Cpu8080, type IoBus } from "./cpu8080";
 import { Memory } from "./memory";
 import { TK80Panel } from "./panel";
 import { playCmtBlock } from "./cmtAudio";
 import { SpeakerIoBus, CPU_CLOCK_HZ } from "./organAudio";
+import { InfiniteScaleIoBus } from "./infiniteScaleAudio";
 import { SAMPLE_PROGRAMS } from "./samplePrograms";
 import { initTutorial } from "./tutorial";
 import { FN_KEY_CODE } from "./monitor";
@@ -62,8 +63,19 @@ const app = document.getElementById("app")!;
 
 const memory = new Memory();
 const speaker = new SpeakerIoBus();
-const cpu = new Cpu8080(memory, speaker);
+const infiniteScale = new InfiniteScaleIoBus();
+// port 2 (electronic organ/siren/metronome/auto-play) and port 1 (infinite scale) are disjoint,
+// so both buses can just see every OUT and no-op on the ports they don't own.
+const io: IoBus = {
+  output: (port, value) => {
+    speaker.output(port, value);
+    infiniteScale.output(port, value);
+  },
+  input: () => 0xff,
+};
+const cpu = new Cpu8080(memory, io);
 speaker.setCycleSource(() => cpu.cycleCount);
+infiniteScale.setCycleSource(() => cpu.cycleCount);
 const panel = new TK80Panel(cpu, memory);
 panel.onStoreData = playCmtBlock;
 panel.onLoadData = playCmtBlock;
