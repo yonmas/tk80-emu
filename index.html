@@ -35,29 +35,65 @@
       <div id="app"></div>
 
       <div class="manual">
-        <h2>Operating the panel</h2>
-        <ol>
-          <li><strong>RESET</strong> — clear the CPU and panel</li>
-          <li><strong>ADRS SET</strong>, then four hex digits — point at an address</li>
-          <li>two hex digits, then <strong>WRITE INCR</strong> — store a byte and advance to the next address</li>
-          <li><strong>READ INCR / READ DECR</strong> — step to the next or previous address</li>
-          <li>
-            <strong>MODE</strong> — AUTO makes <strong>RUN</strong> free-run to <code>HLT</code>; STEP makes
-            <strong>RUN</strong> execute one instruction (showing PC/A/flags) and <strong>RET</strong> keep stepping
-          </li>
-          <li>
-            <strong>STORE DATA / LOAD DATA</strong> — save or restore the [address, data] memory range via the
-            browser's local storage, standing in for the real machine's cassette interface
-          </li>
-          <li>
-            <strong>load @</strong>, above the panel — load a program directly into memory at an address, a
-            development convenience the real board doesn't have
-          </li>
-        </ol>
-        <p class="note">
-          The real TK-80's monitor ROM is NEC's copyrighted firmware and isn't included here —
-          this panel's address/write/run logic is reimplemented directly instead of running that ROM.
-        </p>
+        <div class="manual-head">
+          <h2>Operating the panel</h2>
+          <button id="lang-toggle" class="lang-toggle" type="button" aria-label="Switch language / 言語を切り替え">
+            ENG/JP
+          </button>
+        </div>
+
+        <div class="manual-lang manual-lang-en">
+          <ol>
+            <li><strong>RESET</strong> — clear the CPU and panel</li>
+            <li><strong>ADRS SET</strong>, then four hex digits — point at an address</li>
+            <li>two hex digits, then <strong>WRITE INCR</strong> — store a byte and advance to the next address</li>
+            <li><strong>READ INCR / READ DECR</strong> — step to the next or previous address</li>
+            <li>
+              <strong>MODE</strong> — AUTO makes <strong>RUN</strong> free-run to <code>HLT</code>; STEP makes
+              <strong>RUN</strong> execute one instruction (showing PC/A/flags) and <strong>RET</strong> keep
+              stepping
+            </li>
+            <li>
+              <strong>STORE DATA / LOAD DATA</strong> — save or restore the [address, data] memory range via the
+              browser's local storage, standing in for the real machine's cassette interface
+            </li>
+            <li>
+              <strong>load @</strong>, above the panel — load a program directly into memory at an address, a
+              development convenience the real board doesn't have
+            </li>
+          </ol>
+          <p class="note">
+            The real TK-80's monitor ROM is NEC's copyrighted firmware and isn't included here —
+            this panel's address/write/run logic is reimplemented directly instead of running that ROM.
+          </p>
+        </div>
+
+        <div class="manual-lang manual-lang-ja" hidden>
+          <ol>
+            <li><strong>RESET</strong> — CPUとパネルを初期化</li>
+            <li><strong>ADRS SET</strong>、続けて4桁の16進数 — アドレスを指定</li>
+            <li>2桁の16進数、続けて <strong>WRITE INCR</strong> — 1バイトを書き込み、次のアドレスへ進む</li>
+            <li><strong>READ INCR / READ DECR</strong> — 次または前のアドレスへ移動</li>
+            <li>
+              <strong>MODE</strong> — AUTOなら <strong>RUN</strong> で現在のアドレスから自由実行し
+              <code>HLT</code> で停止。STEPなら <strong>RUN</strong> で1命令だけ実行し（PC/A/フラグを表示）、
+              <strong>RET</strong> で1命令ずつ進める
+            </li>
+            <li>
+              <strong>STORE DATA / LOAD DATA</strong> — [アドレス, データ] 範囲のメモリをブラウザのローカル
+              ストレージに保存・復元（実機のカセットテープ・インタフェースの代わり）
+            </li>
+            <li>
+              <strong>load @</strong>（パネル上部） — アドレスを指定してプログラムを直接メモリへロード
+              （実機にはない開発用の機能）
+            </li>
+          </ol>
+          <p class="note">
+            実機のモニターROMはNECの著作物のため同梱していません —
+            かわりにこのパネルのアドレス設定・書き込み・実行のロジックを直接実装しています。
+          </p>
+        </div>
+
         <p class="credit">
           Built with <a href="https://claude.com/claude-code" target="_blank" rel="noopener">Claude Code</a>.
         </p>

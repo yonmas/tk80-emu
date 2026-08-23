@@ -197,6 +197,16 @@ loadBtn.addEventListener("click", () => {
 });
 bytesRowEl.appendChild(loadBtn);
 
+// operating-instructions card has an English and a Japanese version; the button just
+// swaps which one is visible, since this content lives in index.html, not #app.
+const langToggleBtn = document.getElementById("lang-toggle");
+const manualEnEl = document.querySelector(".manual-lang-en");
+const manualJaEl = document.querySelector(".manual-lang-ja");
+langToggleBtn?.addEventListener("click", () => {
+  manualEnEl?.toggleAttribute("hidden");
+  manualJaEl?.toggleAttribute("hidden");
+});
+
 function render(): void {
   const s = panel.state;
   if (s.loadError) {
