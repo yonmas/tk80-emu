@@ -1,5 +1,9 @@
 # tk80-emu
 
+[![CI](https://github.com/yonmas/tk80-emu/actions/workflows/ci.yml/badge.svg)](https://github.com/yonmas/tk80-emu/actions/workflows/ci.yml)
+[![Deploy to GitHub Pages](https://github.com/yonmas/tk80-emu/actions/workflows/deploy.yml/badge.svg)](https://github.com/yonmas/tk80-emu/actions/workflows/deploy.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 ブラウザで動く NEC TK-80 風エミュレーターです。CPUコアは Intel 8080 の全命令をTypeScriptで実装し、その上に TK-80 のフロントパネル操作（アドレス設定・16進キー入力・書き込み・実行）を再現しています。
 
 **公開版: https://yonmas.github.io/tk80-emu/**（ブラウザで直接開けます、インストール不要）
