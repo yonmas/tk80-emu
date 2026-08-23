@@ -3,6 +3,7 @@ import { Memory } from "./memory";
 import { TK80Panel } from "./panel";
 import { playCmtBlock } from "./cmtAudio";
 import { initTutorial } from "./tutorial";
+import { FN_KEY_CODE } from "./monitor";
 
 const SEGMENT_MAP: Record<string, string[]> = {
   "0": ["a", "b", "c", "d", "e", "f"],
@@ -99,12 +100,29 @@ const dataDigits = [0, 1, 2, 3].map(() => new SevenSegDigit());
 dataDigits.forEach((d) => dataGroup.appendChild(d.el));
 displayEl.appendChild(dataGroup);
 
-function makeFnButton(parent: HTMLElement, label: string, onClick: () => void): HTMLButtonElement {
+// Tracks which of the 24 scanned keys (see monitor.ts's FN_KEY_CODE) is currently physically
+// held down, independent of the click handlers below - this is what the reimplemented KEYIN/
+// INPUT monitor subroutines poll, matching a running program's own live view of the keyboard.
+function wireHeldKey(btn: HTMLButtonElement, keyCode: number): void {
+  btn.addEventListener("pointerdown", () => panel.heldKey.press(keyCode));
+  const release = () => panel.heldKey.release(keyCode);
+  btn.addEventListener("pointerup", release);
+  btn.addEventListener("pointercancel", release);
+  btn.addEventListener("pointerleave", release);
+}
+
+function makeFnButton(
+  parent: HTMLElement,
+  label: string,
+  onClick: () => void,
+  heldKeyCode?: number,
+): HTMLButtonElement {
   const btn = document.createElement("button");
   btn.className = "fn";
   // the real key caps print two-word labels on two lines (e.g. "ADRS" / "SET")
   btn.innerHTML = label.includes(" ") ? label.replace(" ", "<br>") : label;
   btn.addEventListener("click", onClick);
+  if (heldKeyCode !== undefined) wireHeldKey(btn, heldKeyCode);
   parent.appendChild(btn);
   return btn;
 }
@@ -116,10 +134,11 @@ keygridEl.className = "keygrid";
 caseEl.appendChild(keygridEl);
 
 // top row, matches the real board's 5-key row: RET RUN STORE DATA LOAD DATA RESET
-makeFnButton(keygridEl, "RET", () => panel.pressRet());
-makeFnButton(keygridEl, "RUN", () => panel.pressRun());
-makeFnButton(keygridEl, "STORE DATA", () => panel.pressStoreData());
-makeFnButton(keygridEl, "LOAD DATA", () => panel.pressLoadData());
+// (RESET has no held-key code - it isn't one of the monitor's 24 scanned keys, see FN_KEY_CODE)
+makeFnButton(keygridEl, "RET", () => panel.pressRet(), FN_KEY_CODE.RET);
+makeFnButton(keygridEl, "RUN", () => panel.pressRun(), FN_KEY_CODE.RUN);
+makeFnButton(keygridEl, "STORE DATA", () => panel.pressStoreData(), FN_KEY_CODE.STORE_DATA);
+makeFnButton(keygridEl, "LOAD DATA", () => panel.pressLoadData(), FN_KEY_CODE.LOAD_DATA);
 makeFnButton(keygridEl, "RESET", () => panel.pressReset());
 
 // 4 rows of hex keys, each followed by the real board's matching right-column function key
@@ -129,21 +148,23 @@ const HEX_ROWS = [
   ["4", "5", "6", "7"],
   ["0", "1", "2", "3"],
 ];
-const ROW_FN_KEYS: [string, () => void][] = [
-  ["ADRS SET", () => panel.pressAdrsSet()],
-  ["READ INCR", () => panel.pressIncr()],
-  ["READ DECR", () => panel.pressDecr()],
-  ["WRITE INCR", () => panel.pressWrite()],
+const ROW_FN_KEYS: [string, () => void, number][] = [
+  ["ADRS SET", () => panel.pressAdrsSet(), FN_KEY_CODE.ADRS_SET],
+  ["READ INCR", () => panel.pressIncr(), FN_KEY_CODE.READ_INCR],
+  ["READ DECR", () => panel.pressDecr(), FN_KEY_CODE.READ_DECR],
+  ["WRITE INCR", () => panel.pressWrite(), FN_KEY_CODE.WRITE_INCR],
 ];
 HEX_ROWS.forEach((row, i) => {
   for (const key of row) {
+    const digit = parseInt(key, 16);
     const btn = document.createElement("button");
     btn.textContent = key;
-    btn.addEventListener("click", () => panel.pressHex(parseInt(key, 16)));
+    btn.addEventListener("click", () => panel.pressHex(digit));
+    wireHeldKey(btn, digit);
     keygridEl.appendChild(btn);
   }
-  const [label, onClick] = ROW_FN_KEYS[i];
-  makeFnButton(keygridEl, label, onClick);
+  const [label, onClick, heldKeyCode] = ROW_FN_KEYS[i];
+  makeFnButton(keygridEl, label, onClick, heldKeyCode);
 });
 
 // MODE switch: AUTO free-runs to HLT, STEP executes one instruction per RUN/RET press.

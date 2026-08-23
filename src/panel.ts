@@ -1,5 +1,6 @@
 import type { Cpu8080 } from "./cpu8080";
 import type { Bus } from "./memory";
+import { HeldKeyState, installMonitor, resetMonitorState } from "./monitor";
 
 export type RunMode = "auto" | "step";
 
@@ -78,6 +79,12 @@ export function buildCmtBlock(start: number, end: number, bytes: number[]): numb
  * fire with the real CMT block bytes (see buildCmtBlock) so a caller can
  * play the actual cassette-interface tone (ch. 6) - that part is optional
  * and browser-only, so it's a plain callback rather than baked in here.
+ *
+ * A handful of the real monitor ROM's own subroutines (RGDSP/SEGCG display update,
+ * INPUT/KEYIN key polling, the D1-D3 timers) are also reimplemented the same way -
+ * see src/monitor.ts's doc comment for exactly what's covered and what isn't. heldKey
+ * tracks which of the 24 scanned keys is currently physically held down, for KEYIN/INPUT;
+ * main.ts wires it up from pointerdown/pointerup on the real key buttons.
  */
 export class TK80Panel {
   address = 0;
@@ -87,12 +94,17 @@ export class TK80Panel {
   loadError = false;
   onStoreData?: (block: number[]) => void;
   onLoadData?: (block: number[]) => void;
+  readonly heldKey = new HeldKeyState();
 
   constructor(
     private cpu: Cpu8080,
     private bus: Bus,
   ) {
     this.readAt(this.address);
+    installMonitor(this.cpu, this.heldKey, (address, data) => {
+      this.address = address;
+      this.dataRegister = data;
+    });
   }
 
   private readAt(addr: number): void {
@@ -142,6 +154,7 @@ export class TK80Panel {
 
   pressReset(): void {
     this.cpu.reset();
+    resetMonitorState(this.cpu);
     this.address = 0;
     this.dataRegister = 0;
     this.running = false;

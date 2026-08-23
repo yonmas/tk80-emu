@@ -5,6 +5,16 @@ export interface IoBus {
   output(port: number, value: number): void;
 }
 
+/**
+ * A stand-in for one monitor ROM subroutine, keyed by its documented entry address (see
+ * src/monitor.ts). Called once per step() while PC sits at that address, in place of decoding
+ * whatever's actually in memory there (there is no real ROM there - see monitor.ts's own doc
+ * comment for why). Returns true once the call has completed - i.e. it already popped the
+ * return address off the stack into pc, the same way a RET would - or false to leave pc
+ * untouched and be called again next step(), for a subroutine documented as blocking (KEYIN).
+ */
+export type MonitorHook = (cpu: Cpu8080) => boolean;
+
 const REG_B = 0;
 const REG_C = 1;
 const REG_D = 2;
@@ -34,10 +44,18 @@ export class Cpu8080 {
   interruptsEnabled = false;
   halted = false;
 
+  /** Monitor-subroutine stand-ins, keyed by entry address. See MonitorHook's doc comment. */
+  monitorHooks?: Map<number, MonitorHook>;
+
   constructor(
     private bus: Bus,
     private io?: IoBus,
   ) {}
+
+  /** Pops a return address off the stack into pc, the same way RET does. For MonitorHook use. */
+  returnFromHook(): void {
+    this.pc = this.pop16();
+  }
 
   reset(): void {
     this.a = this.b = this.c = this.d = this.e = this.h = this.l = 0;
@@ -51,8 +69,21 @@ export class Cpu8080 {
   /** Runs one instruction and returns the number of clock cycles it took. */
   step(): number {
     if (this.halted) return 4;
+    const hook = this.monitorHooks?.get(this.pc);
+    if (hook) {
+      hook(this);
+      return 17; // roughly a CALL's worth; monitor hooks aren't cycle-timed
+    }
     const opcode = this.fetch8();
     return this.execute(opcode);
+  }
+
+  /** Direct memory access for MonitorHook implementations (the monitor's own RAM-mapped state). */
+  readMem(addr: number): number {
+    return this.bus.read8(addr);
+  }
+  writeMem(addr: number, value: number): void {
+    this.bus.write8(addr, value);
   }
 
   /** Vectors a maskable interrupt (RST n) if interrupts are enabled. Returns whether it was accepted. */
