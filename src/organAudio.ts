@@ -1,5 +1,5 @@
 import type { IoBus } from "./cpu8080";
-import { getAudioContext } from "./audioContext";
+import { getAudioContext, getMasterGain } from "./audioContext";
 
 // NEC TK-80 User's Manual (IEM-560A), 1.2 TK-80の仕様: "クロック周波数 2.048MHz". The ch.2/4/5
 // application programs (電子サイレン/電子オルガン/自動演奏) all generate their tone by bit-banging
@@ -45,7 +45,7 @@ export class SpeakerIoBus implements IoBus {
     if (!this.node) {
       const src = ctx.createConstantSource();
       src.offset.value = -1;
-      src.connect(ctx.destination);
+      src.connect(getMasterGain(ctx));
       src.start();
       this.node = src;
     }

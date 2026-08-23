@@ -1,5 +1,5 @@
 import { encodeCmtByte } from "./panel";
-import { getAudioContext } from "./audioContext";
+import { getAudioContext, getMasterGain } from "./audioContext";
 
 const BAUD_RATE = 110; // matches teletype, per the manual's ch. 6.2
 const BIT_SECONDS = 1 / BAUD_RATE;
@@ -27,7 +27,7 @@ export function playCmtBlock(block: number[]): void {
   osc.type = "square";
   osc.frequency.value = CARRIER_HZ;
   osc.connect(gain);
-  gain.connect(ctx.destination);
+  gain.connect(getMasterGain(ctx));
 
   let t = ctx.currentTime + 0.05;
   gain.gain.setValueAtTime(0, t);

@@ -349,6 +349,69 @@ button.fn:hover {
   outline-offset: 1px;
 }
 
+/* wraps the hex-bytes field and its sample-program picker button/menu so the menu can be
+   positioned relative to the field rather than the whole row. */
+.sample-picker {
+  position: relative;
+  flex: 1;
+  display: flex;
+}
+
+.sample-picker input[type="text"] {
+  border-radius: 5px 0 0 5px;
+}
+
+.sample-picker-btn {
+  flex-shrink: 0;
+  width: 26px;
+  padding: 0;
+  font-size: 10px;
+  font-family: var(--font-mono);
+  background: var(--pcb-bright);
+  color: var(--slate);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-left: none;
+  border-radius: 0 5px 5px 0;
+  box-shadow: none;
+  cursor: pointer;
+}
+.sample-picker-btn:hover {
+  background: var(--pcb-bright-hi);
+  color: var(--paper);
+}
+
+.sample-picker-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 10;
+  background: var(--pcb-hi);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 6px;
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.6);
+}
+
+.sample-picker-menu button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  font-size: 11px;
+  padding: 7px 9px;
+  background: transparent;
+  color: var(--paper);
+  border-radius: 4px;
+  box-shadow: none;
+}
+.sample-picker-menu button:hover {
+  background: var(--pcb-bright);
+}
+
 /* --- tutorial: shown inside the manual card in place of the operating instructions.
    It only ever displays instructions - it never touches the panel - so entering,
    paging through, or exiting it leaves whatever the visitor has done on the real

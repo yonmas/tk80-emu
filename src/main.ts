@@ -208,32 +208,51 @@ const bytesRowEl = document.createElement("div");
 bytesRowEl.className = "loader-row";
 loaderEl.appendChild(bytesRowEl);
 
-const loadBytesInput = document.createElement("input");
-loadBytesInput.type = "text";
-loadBytesInput.placeholder = "hex bytes, e.g. 3E 05 06 03 80 76 - or pick a sample below";
-bytesRowEl.appendChild(loadBytesInput);
-
 // same field doubles as free-text entry and a preset picker: typing/pasting bytes directly
-// loads them as-is, while the browser's native datalist dropdown (triggered by the `list`
-// attribute) offers the sample programs below by name. Picking one fills the field with that
-// program's bytes - matched back against SAMPLE_PROGRAMS on "input" below to also set the
-// address field, since a plain <option> can't carry a second value for that.
+// loads them as-is, while the ▾ button opens a small custom menu of the sample programs below,
+// by name. A native <datalist> was tried first, but its dropdown arrow only shows on hover/
+// focus (not discoverable at a glance) and it silently filters out every other option once the
+// field's text exactly matches one candidate (i.e. right after picking one) - a fully custom
+// menu avoids both, at the cost of not being a native input affordance.
 const bytesToHex = (bytes: number[]): string => bytes.map((b) => b.toString(16).toUpperCase().padStart(2, "0")).join(" ");
 
-const sampleListEl = document.createElement("datalist");
-sampleListEl.id = "sample-programs";
-for (const sample of SAMPLE_PROGRAMS) {
-  const opt = document.createElement("option");
-  opt.value = bytesToHex(sample.bytes);
-  opt.label = `${sample.name} (${sample.address.toString(16).toUpperCase()}H)`;
-  sampleListEl.appendChild(opt);
-}
-loadBytesInput.setAttribute("list", "sample-programs");
-loadBytesInput.after(sampleListEl);
+const bytesFieldWrapEl = document.createElement("div");
+bytesFieldWrapEl.className = "sample-picker";
+bytesRowEl.appendChild(bytesFieldWrapEl);
 
-loadBytesInput.addEventListener("input", () => {
-  const match = SAMPLE_PROGRAMS.find((sample) => bytesToHex(sample.bytes) === loadBytesInput.value);
-  if (match) loadAddrInput.value = match.address.toString(16).toUpperCase();
+const loadBytesInput = document.createElement("input");
+loadBytesInput.type = "text";
+loadBytesInput.placeholder = "hex bytes, e.g. 3E 05 06 03 80 76";
+bytesFieldWrapEl.appendChild(loadBytesInput);
+
+const samplePickerBtn = document.createElement("button");
+samplePickerBtn.type = "button";
+samplePickerBtn.className = "sample-picker-btn";
+samplePickerBtn.textContent = "▾"; // ▾
+samplePickerBtn.setAttribute("aria-label", "Choose a sample program / サンプルプログラムを選択");
+bytesFieldWrapEl.appendChild(samplePickerBtn);
+
+const sampleMenuEl = document.createElement("div");
+sampleMenuEl.className = "sample-picker-menu";
+sampleMenuEl.hidden = true;
+for (const sample of SAMPLE_PROGRAMS) {
+  const item = document.createElement("button");
+  item.type = "button";
+  item.textContent = `${sample.name} (${sample.address.toString(16).toUpperCase()}H)`;
+  item.addEventListener("click", () => {
+    loadBytesInput.value = bytesToHex(sample.bytes);
+    loadAddrInput.value = sample.address.toString(16).toUpperCase();
+    sampleMenuEl.hidden = true;
+  });
+  sampleMenuEl.appendChild(item);
+}
+bytesFieldWrapEl.appendChild(sampleMenuEl);
+
+samplePickerBtn.addEventListener("click", () => {
+  sampleMenuEl.hidden = !sampleMenuEl.hidden;
+});
+document.addEventListener("click", (e) => {
+  if (!bytesFieldWrapEl.contains(e.target as Node)) sampleMenuEl.hidden = true;
 });
 
 const loadBtn = document.createElement("button");
