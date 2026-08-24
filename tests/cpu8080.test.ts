@@ -280,18 +280,21 @@ describe("Cpu8080 real-world program (NEC TK-80 Application Program manual)", ()
   });
 
   it("runs the 'automatic music-play' program (ch.5) with a longer custom tune (きらきら星)", () => {
-    // Same ch.5 program (5.4) as the previous test, byte-for-byte identical - only the data
-    // table differs (see src/samplePrograms.ts for how its pitch bytes were derived: each one
-    // is the D value whose measured SOUND (0x821C) OUT-toggle period lands within ~0.3% of an
-    // equal-tempered C4-A4 note, A4=440Hz). 42 notes across 6 phrases, quarter notes at
-    // duration 1 and the held note ending each phrase at duration 2 - exercises a data table
-    // much longer than one page (0x8250-0x82A3) to make sure the read/advance/loop logic holds
-    // up beyond the trivial two-note case above.
+    // Same ch.5 program (5.4) as the previous test, structurally identical - only the data table
+    // differs, plus two single-byte tweaks to the manual's timing constants (see
+    // src/samplePrograms.ts for how the pitch bytes and both tweaks were derived empirically
+    // against this exact program, not by formula). 42 notes across 6 phrases, quarter notes at
+    // duration 1 and the held note ending each phrase at duration 2, followed by a closing
+    // 2-beat rest before the data table's 0x00 sentinel loops it back to START - exercises a
+    // data table much longer than one page (0x8250-0x82A5), and the rest path (top-bit-set
+    // pitch byte), to make sure the read/advance/loop logic holds up beyond the trivial
+    // two-note case above.
     const program = findSample("第5章 音楽の自動演奏プログラム（きらきら星）");
     const mem = new Memory();
     mem.loadBytes(0x8200, program);
 
     const notePitches: number[] = [];
+    const restDurations: number[] = [];
     const io: IoBus = {
       output: (port, value) => {
         expect(port).toBe(2);
@@ -302,7 +305,7 @@ describe("Cpu8080 real-world program (NEC TK-80 Application Program manual)", ()
     cpu.pc = 0x8200;
 
     let starts = 0;
-    for (let i = 0; i < 8_000_000 && starts < 2; i++) {
+    for (let i = 0; i < 30_000_000 && starts < 2; i++) {
       if (cpu.pc === 0x8200) {
         starts++;
         if (starts === 2) break;
@@ -310,23 +313,28 @@ describe("Cpu8080 real-world program (NEC TK-80 Application Program manual)", ()
       if (cpu.pc === 0x821c) {
         notePitches.push(cpu.b);
       }
+      if (cpu.pc === 0x823c) {
+        restDurations.push(cpu.c);
+      }
       cpu.step();
     }
 
     expect(starts).toBe(2);
 
-    const C = 0x7b,
-      D = 0x6e,
-      E = 0x62,
-      F = 0x5c,
-      G = 0x52,
-      A = 0x49;
+    const C = 0x72,
+      D = 0x66,
+      E = 0x5b,
+      F = 0x55,
+      G = 0x4c,
+      A = 0x44;
     const phraseA = [C, C, G, G, A, A, G, G];
     const phraseB = [F, F, E, E, D, D, C, C];
     const phraseC = [G, G, F, F, E, E, D, D];
     // one B entry per SOUND call, so the held final note of each phrase (duration 2) appears twice
     const expectedCalls = [...phraseA, ...phraseB, ...phraseC, ...phraseC, ...phraseA, ...phraseB];
     expect(notePitches).toEqual(expectedCalls);
+    // the closing rest (top-bit-set pitch byte 0x80) is entered exactly once, for 2 beats
+    expect(restDurations).toEqual([2]);
   });
 
   it("runs the 'infinite scale' program (ch.6) exactly as coded in the manual", () => {
