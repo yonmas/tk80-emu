@@ -3,6 +3,9 @@ export interface SampleProgram {
   nameEn: string;
   address: number;
   bytes: number[];
+  /** Kept out of the "load @" dropdown (main.ts filters these out) but still in this single
+   * source of truth so a regression test can still exercise it without duplicating its bytes. */
+  hiddenFromMenu?: boolean;
 }
 
 /**
@@ -126,9 +129,13 @@ export const SAMPLE_PROGRAMS: SampleProgram[] = [
     // in the documented (pitch, duration) format (5.5 leaves the actual notes up to the user).
     // The 79-byte program (0x8200-0x824E) and the data table (0x8250-) are one contiguous
     // 87-byte block once the single pad byte at 0x824F between them is included.
-    name: "第5章 音楽の自動演奏プログラム",
-    nameEn: "Automatic Music-Play Program",
+    // Superseded in the "load @" dropdown by the きらきら星 sample below, which uses the same
+    // program bytes with a longer tune - kept here (hiddenFromMenu) purely so the regression
+    // test can still check this exact, unmodified 5.4 transcription against the real manual.
+    name: "第5章 音楽の自動演奏プログラム（回帰テスト用・非表示）",
+    nameEn: "Automatic Music-Play Program (regression-test only, hidden)",
     address: 0x8200,
+    hiddenFromMenu: true,
     // prettier-ignore
     bytes: [
       0x21, 0x50, 0x82, 0x7e, 0xa7, 0xca, 0x00, 0x82, 0x23, 0x4e, 0x47, 0x07, 0xda, 0x3c, 0x82, 0xe5,
@@ -158,8 +165,8 @@ export const SAMPLE_PROGRAMS: SampleProgram[] = [
     // notes use duration 1, the held note ending each phrase uses duration 2, and the closing
     // rest before the loop uses duration 4 (twice as long as a held note). Not from the manual -
     // 5.5 leaves the actual tune up to the user, same as the short example above.
-    name: "第5章 音楽の自動演奏プログラム（きらきら星）",
-    nameEn: "Automatic Music-Play Program (Twinkle Twinkle Little Star)",
+    name: "第5章 音楽の自動演奏プログラム",
+    nameEn: "Automatic Music-Play Program",
     address: 0x8200,
     // prettier-ignore
     bytes: [

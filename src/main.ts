@@ -260,15 +260,20 @@ sampleMenuEl.className = "sample-picker-menu";
 sampleMenuEl.hidden = true;
 
 // The menu has no language switch of its own, so it follows the operating-instructions card's
-// ENG/JP toggle below - "Sample0/1/..." stays English either way, only the program name after
-// it swaps. Starts in English to match the instructions card's default (unhidden .manual-lang-en).
+// ENG/JP toggle below - only the program name and the "Sample"/"サンプル" word swap; the number
+// stays as-is. Starts in English to match the instructions card's default (unhidden .manual-lang-en).
+// hiddenFromMenu entries (superseded manual transcriptions kept only for regression tests) are
+// filtered out here, and the visible ones are numbered by their position in that filtered list
+// so the dropdown never shows a gap.
 let sampleMenuLang: "en" | "ja" = "en";
+const visibleSamples = SAMPLE_PROGRAMS.filter((sample) => !sample.hiddenFromMenu);
 const sampleLabel = (i: number): string => {
-  const sample = SAMPLE_PROGRAMS[i];
+  const sample = visibleSamples[i];
+  const prefix = sampleMenuLang === "en" ? "Sample" : "サンプル";
   const name = sampleMenuLang === "en" ? sample.nameEn : sample.name.replace(/^第\d+章\s*/, "");
-  return `Sample${i} ${name}`;
+  return `${prefix}${i} ${name}`;
 };
-const sampleMenuItems = SAMPLE_PROGRAMS.map((sample, i) => {
+const sampleMenuItems = visibleSamples.map((sample, i) => {
   const item = document.createElement("button");
   item.type = "button";
   item.textContent = sampleLabel(i);

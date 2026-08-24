@@ -229,7 +229,7 @@ describe("Cpu8080 real-world program (NEC TK-80 Application Program manual)", ()
     // actual tune's bytes up to the user, so the data table (ド for 1 unit, a rest, レ for 1
     // unit, then the end-of-song sentinel) is a short hand-picked tune, not itself from the
     // manual - it's contiguous with the program (one pad byte at 0x824F) so both load as one block.
-    const program = findSample("第5章 音楽の自動演奏プログラム");
+    const program = findSample("第5章 音楽の自動演奏プログラム（回帰テスト用・非表示）");
     const mem = new Memory();
     mem.loadBytes(0x8200, program);
 
@@ -289,7 +289,7 @@ describe("Cpu8080 real-world program (NEC TK-80 Application Program manual)", ()
     // data table much longer than one page (0x8250-0x82A5), and the rest path (top-bit-set
     // pitch byte), to make sure the read/advance/loop logic holds up beyond the trivial
     // two-note case above.
-    const program = findSample("第5章 音楽の自動演奏プログラム（きらきら星）");
+    const program = findSample("第5章 音楽の自動演奏プログラム");
     const mem = new Memory();
     mem.loadBytes(0x8200, program);
 
