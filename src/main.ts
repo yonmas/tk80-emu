@@ -258,17 +258,17 @@ bytesFieldWrapEl.appendChild(samplePickerBtn);
 const sampleMenuEl = document.createElement("div");
 sampleMenuEl.className = "sample-picker-menu";
 sampleMenuEl.hidden = true;
-for (const sample of SAMPLE_PROGRAMS) {
+SAMPLE_PROGRAMS.forEach((sample, i) => {
   const item = document.createElement("button");
   item.type = "button";
-  item.textContent = `${sample.name} (${sample.address.toString(16).toUpperCase()}H)`;
+  item.textContent = `サンプル${i + 1}`;
   item.addEventListener("click", () => {
     loadBytesInput.value = bytesToHex(sample.bytes);
     loadAddrInput.value = sample.address.toString(16).toUpperCase();
     sampleMenuEl.hidden = true;
   });
   sampleMenuEl.appendChild(item);
-}
+});
 bytesFieldWrapEl.appendChild(sampleMenuEl);
 
 samplePickerBtn.addEventListener("click", () => {
