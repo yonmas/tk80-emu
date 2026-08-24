@@ -258,16 +258,27 @@ bytesFieldWrapEl.appendChild(samplePickerBtn);
 const sampleMenuEl = document.createElement("div");
 sampleMenuEl.className = "sample-picker-menu";
 sampleMenuEl.hidden = true;
-SAMPLE_PROGRAMS.forEach((sample, i) => {
+
+// The menu has no language switch of its own, so it follows the operating-instructions card's
+// ENG/JP toggle below - "Sample0/1/..." stays English either way, only the program name after
+// it swaps. Starts in English to match the instructions card's default (unhidden .manual-lang-en).
+let sampleMenuLang: "en" | "ja" = "en";
+const sampleLabel = (i: number): string => {
+  const sample = SAMPLE_PROGRAMS[i];
+  const name = sampleMenuLang === "en" ? sample.nameEn : sample.name.replace(/^第\d+章\s*/, "");
+  return `Sample${i} ${name}`;
+};
+const sampleMenuItems = SAMPLE_PROGRAMS.map((sample, i) => {
   const item = document.createElement("button");
   item.type = "button";
-  item.textContent = `Sample${i} ${sample.name.replace(/^第\d+章\s*/, "")}`;
+  item.textContent = sampleLabel(i);
   item.addEventListener("click", () => {
     loadBytesInput.value = bytesToHex(sample.bytes);
     loadAddrInput.value = sample.address.toString(16).toUpperCase();
     sampleMenuEl.hidden = true;
   });
   sampleMenuEl.appendChild(item);
+  return item;
 });
 bytesFieldWrapEl.appendChild(sampleMenuEl);
 
@@ -302,6 +313,8 @@ const langToggleBtn = document.getElementById("lang-toggle");
 const manualLangEls = document.querySelectorAll(".manual-lang-en, .manual-lang-ja");
 langToggleBtn?.addEventListener("click", () => {
   manualLangEls.forEach((el) => el.toggleAttribute("hidden"));
+  sampleMenuLang = sampleMenuLang === "en" ? "ja" : "en";
+  sampleMenuItems.forEach((item, i) => (item.textContent = sampleLabel(i)));
 });
 
 initTutorial();

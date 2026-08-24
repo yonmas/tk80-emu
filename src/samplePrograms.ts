@@ -1,5 +1,6 @@
 export interface SampleProgram {
   name: string;
+  nameEn: string;
   address: number;
   bytes: number[];
 }
@@ -14,6 +15,7 @@ export const SAMPLE_PROGRAMS: SampleProgram[] = [
   {
     // The tiny program used throughout the README/tutorial: MVI A,05 / MVI B,03 / ADD B / HLT
     name: "5+3=8（最小サンプル）",
+    nameEn: "5+3=8 (minimal sample)",
     address: 0x8000,
     bytes: [0x3e, 0x05, 0x06, 0x03, 0x80, 0x76],
   },
@@ -21,6 +23,7 @@ export const SAMPLE_PROGRAMS: SampleProgram[] = [
     // NEC "TK-80 応用プログラム" (IEM-561A) ch.1 "ディジタル・タイマ", section 1.4. Calls the
     // real RGDSP monitor entry point (0x01A1) to mirror its BCD clock onto the panel display.
     name: "第1章 ディジタル・タイマ",
+    nameEn: "Digital Timer",
     address: 0x8200,
     // prettier-ignore
     bytes: [
@@ -36,6 +39,7 @@ export const SAMPLE_PROGRAMS: SampleProgram[] = [
     // Same manual, ch.2 "電子サイレン", section 2.4. Self-contained (no monitor ROM calls) -
     // sweeps a frequency parameter and OUTs a square wave to port 2 (audible once RUN starts).
     name: "第2章 電子サイレン",
+    nameEn: "Electronic Siren",
     address: 0x8200,
     // prettier-ignore
     bytes: [
@@ -53,6 +57,7 @@ export const SAMPLE_PROGRAMS: SampleProgram[] = [
     // beats) below is this project's own demo choice, not from the manual, laid out contiguous
     // with the program (8 pad bytes filling 8248H-824FH) so the whole thing loads as one block.
     name: "第3章 プログラマブル・メトロノーム",
+    nameEn: "Programmable Metronome",
     address: 0x8200,
     // prettier-ignore
     bytes: [
@@ -69,6 +74,7 @@ export const SAMPLE_PROGRAMS: SampleProgram[] = [
     // Same manual, ch.4 "電子オルガン", section 4.3. Calls the real KEYIN monitor entry point
     // (0x0216) - hold a hex/function key while running to play its note.
     name: "第4章 電子オルガン",
+    nameEn: "Electronic Organ",
     address: 0x8200,
     // prettier-ignore
     bytes: [
@@ -121,6 +127,7 @@ export const SAMPLE_PROGRAMS: SampleProgram[] = [
     // The 79-byte program (0x8200-0x824E) and the data table (0x8250-) are one contiguous
     // 87-byte block once the single pad byte at 0x824F between them is included.
     name: "第5章 音楽の自動演奏プログラム",
+    nameEn: "Automatic Music-Play Program",
     address: 0x8200,
     // prettier-ignore
     bytes: [
@@ -152,6 +159,7 @@ export const SAMPLE_PROGRAMS: SampleProgram[] = [
     // rest before the loop uses duration 4 (twice as long as a held note). Not from the manual -
     // 5.5 leaves the actual tune up to the user, same as the short example above.
     name: "第5章 音楽の自動演奏プログラム（きらきら星）",
+    nameEn: "Automatic Music-Play Program (Twinkle Twinkle Little Star)",
     address: 0x8200,
     // prettier-ignore
     bytes: [
@@ -183,6 +191,7 @@ export const SAMPLE_PROGRAMS: SampleProgram[] = [
     // per note (ド/レ/ミ/ファ/ソ/ラ/シ) documented in 6.3, then loops (JMP ST+4, skipping the
     // one-time PPI setup) forever - the counter is never reset, so the scale never repeats.
     name: "第6章 無限音階プログラム",
+    nameEn: "Infinite Scale Program",
     address: 0x8200,
     // prettier-ignore
     bytes: [
