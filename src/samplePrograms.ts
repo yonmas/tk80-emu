@@ -147,10 +147,10 @@ export const SAMPLE_PROGRAMS: SampleProgram[] = [
     // every note by about a tenth (measured ~229ms/unit -> ~248ms/unit); REST's own separate
     // constant at 0x823E, LXI H,50FF -> LXI H,53FF, is nudged so its unit (originally a
     // similar-but-uncorrelated ~240ms) also lands on that same ~248ms, so the closing rest's
-    // duration 2 reads as two beats at the song's own (now slightly slower) tempo. Quarter notes
-    // use duration 1, the held note ending each phrase uses duration 2, and the closing rest
-    // before the loop also uses duration 2. Not from the manual - 5.5 leaves the actual tune up
-    // to the user, same as the short example above.
+    // duration reads as that many beats at the song's own (now slightly slower) tempo. Quarter
+    // notes use duration 1, the held note ending each phrase uses duration 2, and the closing
+    // rest before the loop uses duration 4 (twice as long as a held note). Not from the manual -
+    // 5.5 leaves the actual tune up to the user, same as the short example above.
     name: "第5章 音楽の自動演奏プログラム（きらきら星）",
     address: 0x8200,
     // prettier-ignore
@@ -169,7 +169,7 @@ export const SAMPLE_PROGRAMS: SampleProgram[] = [
       0x4c, 0x01, 0x4c, 0x01, 0x55, 0x01, 0x55, 0x01, 0x5b, 0x01, 0x5b, 0x01, 0x66, 0x02, // ソ ソ ファ ファ ミ ミ レー
       0x72, 0x01, 0x72, 0x01, 0x4c, 0x01, 0x4c, 0x01, 0x44, 0x01, 0x44, 0x01, 0x4c, 0x02, // ド ド ソ ソ ラ ラ ソー
       0x55, 0x01, 0x55, 0x01, 0x5b, 0x01, 0x5b, 0x01, 0x66, 0x01, 0x66, 0x01, 0x72, 0x02, // ファ ファ ミ ミ レ レ ドー
-      0x80, 0x02, // ループ前に2拍分の休符
+      0x80, 0x04, // ループ前に4拍分の休符
       0x00,
     ],
   },

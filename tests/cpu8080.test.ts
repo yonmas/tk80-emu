@@ -285,7 +285,7 @@ describe("Cpu8080 real-world program (NEC TK-80 Application Program manual)", ()
     // src/samplePrograms.ts for how the pitch bytes and both tweaks were derived empirically
     // against this exact program, not by formula). 42 notes across 6 phrases, quarter notes at
     // duration 1 and the held note ending each phrase at duration 2, followed by a closing
-    // 2-beat rest before the data table's 0x00 sentinel loops it back to START - exercises a
+    // 4-beat rest before the data table's 0x00 sentinel loops it back to START - exercises a
     // data table much longer than one page (0x8250-0x82A5), and the rest path (top-bit-set
     // pitch byte), to make sure the read/advance/loop logic holds up beyond the trivial
     // two-note case above.
@@ -333,8 +333,8 @@ describe("Cpu8080 real-world program (NEC TK-80 Application Program manual)", ()
     // one B entry per SOUND call, so the held final note of each phrase (duration 2) appears twice
     const expectedCalls = [...phraseA, ...phraseB, ...phraseC, ...phraseC, ...phraseA, ...phraseB];
     expect(notePitches).toEqual(expectedCalls);
-    // the closing rest (top-bit-set pitch byte 0x80) is entered exactly once, for 2 beats
-    expect(restDurations).toEqual([2]);
+    // the closing rest (top-bit-set pitch byte 0x80) is entered exactly once, for 4 beats
+    expect(restDurations).toEqual([4]);
   });
 
   it("runs the 'infinite scale' program (ch.6) exactly as coded in the manual", () => {
