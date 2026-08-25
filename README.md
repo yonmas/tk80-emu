@@ -6,7 +6,7 @@
 
 ブラウザで動く NEC TK-80 風エミュレーターです。CPUコアは Intel 8080 の全命令をTypeScriptで実装し、その上に TK-80 のフロントパネル操作（アドレス設定・16進キー入力・書き込み・実行）を再現しています。
 
-**公開版: https://yonmas.github.io/tk80-emu/**（ブラウザで直接開けます、インストール不要）
+**公開版: [https://yonmas.github.io/tk80-emu/](https://yonmas.github.io/tk80-emu/)**（ブラウザで直接開けます、インストール不要）
 
 ![TK-80 emulator のパネル](docs/screenshot.png)
 
