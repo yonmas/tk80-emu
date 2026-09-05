@@ -45,6 +45,15 @@ export class Cpu8080 {
   halted = false;
 
   /**
+   * Real 8080 hardware: EI doesn't take effect until the instruction right after it has
+   * retired (so e.g. EI/RET pairs used to re-enable interrupts on the way out of an ISR
+   * can't be interrupted again immediately). Counts down 2->1->0 across the two step()
+   * calls following EI (its own and the next instruction's); interruptsEnabled flips to
+   * true the moment it hits 0, i.e. right as that next instruction retires.
+   */
+  private eiDelayCountdown = 0;
+
+  /**
    * Running total of clock cycles executed, for anything that needs to relate CPU time to
    * real time (e.g. src/organAudio.ts scheduling OUT-driven speaker toggles). Doesn't reset
    * on reset() - the real crystal oscillator wouldn't either.
@@ -71,21 +80,33 @@ export class Cpu8080 {
     this.s = this.z = this.ac = this.p = this.cy = false;
     this.interruptsEnabled = false;
     this.halted = false;
+    this.eiDelayCountdown = 0;
   }
 
   /** Runs one instruction and returns the number of clock cycles it took. */
   step(): number {
-    if (this.halted) return 4;
+    if (this.halted) {
+      this.tickEiDelay();
+      return 4;
+    }
     const hook = this.monitorHooks?.get(this.pc);
     if (hook) {
       hook(this);
       this.cycleCount += 17; // roughly a CALL's worth; monitor hooks aren't cycle-timed
+      this.tickEiDelay();
       return 17;
     }
     const opcode = this.fetch8();
     const cycles = this.execute(opcode);
     this.cycleCount += cycles;
+    this.tickEiDelay();
     return cycles;
+  }
+
+  private tickEiDelay(): void {
+    if (this.eiDelayCountdown > 0 && --this.eiDelayCountdown === 0) {
+      this.interruptsEnabled = true;
+    }
   }
 
   /** Direct memory access for MonitorHook implementations (the monitor's own RAM-mapped state). */
@@ -261,8 +282,10 @@ export class Cpu8080 {
   private sub(value: number, borrowIn: number): void {
     const a = this.a;
     const result = a - value - borrowIn;
-    // 8080 software never relies on AC after a subtract (DAA only follows ADD),
-    // so this polarity (true = no borrow out of bit 4) is a reasonable, if lightly-tested, choice.
+    // The 8080 computes subtraction internally as an addition of the two's complement, so AC
+    // (carry out of bit 3 of THAT addition) ends up set when there's NO half-borrow - the
+    // opposite sense from add()'s AC. (8080 software never reads AC after a subtract anyway -
+    // DAA only follows ADD - so this doesn't affect any real program's behavior.)
     this.ac = (a & 0xf) - (value & 0xf) - borrowIn >= 0;
     this.cy = result < 0;
     this.a = result & 0xff;
@@ -820,7 +843,8 @@ export class Cpu8080 {
       case 0xfa:
         return this.jmpIf(this.s);
       case 0xfb:
-        this.interruptsEnabled = true;
+        // Doesn't flip interruptsEnabled here - see eiDelayCountdown's doc comment.
+        this.eiDelayCountdown = 2;
         return 4; // EI
       case 0xfc:
         return this.callIf(this.s);

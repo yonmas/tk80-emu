@@ -107,6 +107,61 @@ describe("Cpu8080 DAA", () => {
   });
 });
 
+describe("Cpu8080 AC flag", () => {
+  it("sets AC on ADD when there's a carry out of bit 3", () => {
+    // MVI A,0F ; MVI B,01 ; ADD B ; HLT -> 0x0F + 0x01 carries out of the low nibble
+    const { cpu } = makeCpu([0x3e, 0x0f, 0x06, 0x01, 0x80, 0x76]);
+    run(cpu);
+    expect(cpu.a).toBe(0x10);
+    expect(cpu.ac).toBe(true);
+  });
+
+  it("clears AC on ADD when there's no carry out of bit 3", () => {
+    // MVI A,01 ; MVI B,01 ; ADD B ; HLT -> no low-nibble carry
+    const { cpu } = makeCpu([0x3e, 0x01, 0x06, 0x01, 0x80, 0x76]);
+    run(cpu);
+    expect(cpu.a).toBe(0x02);
+    expect(cpu.ac).toBe(false);
+  });
+
+  it("clears AC on SUB when the low nibble borrows (opposite sense from ADD)", () => {
+    // MVI A,10 ; MVI B,01 ; SUB B ; HLT -> 0x0 - 0x1 in the low nibble needs a borrow
+    const { cpu } = makeCpu([0x3e, 0x10, 0x06, 0x01, 0x90, 0x76]);
+    run(cpu);
+    expect(cpu.a).toBe(0x0f);
+    expect(cpu.ac).toBe(false);
+  });
+
+  it("sets AC on SUB when the low nibble doesn't borrow", () => {
+    // MVI A,05 ; MVI B,03 ; SUB B ; HLT -> 0x5 - 0x3 needs no borrow
+    const { cpu } = makeCpu([0x3e, 0x05, 0x06, 0x03, 0x90, 0x76]);
+    run(cpu);
+    expect(cpu.a).toBe(0x02);
+    expect(cpu.ac).toBe(true);
+  });
+});
+
+describe("Cpu8080 EI timing", () => {
+  it("does not accept an interrupt until the instruction after EI has retired", () => {
+    // EI ; NOP ; HLT
+    const { cpu } = makeCpu([0xfb, 0x00, 0x76]);
+    expect(cpu.interruptsEnabled).toBe(false);
+    cpu.step(); // EI itself
+    expect(cpu.interruptsEnabled).toBe(false);
+    cpu.step(); // NOP - the instruction right after EI
+    expect(cpu.interruptsEnabled).toBe(true);
+  });
+
+  it("keeps accepting the delayed enable across a HLT (EI/HLT idiom: halt until interrupt)", () => {
+    // EI ; HLT
+    const { cpu } = makeCpu([0xfb, 0x76]);
+    cpu.step(); // EI
+    cpu.step(); // HLT
+    expect(cpu.halted).toBe(true);
+    expect(cpu.interruptsEnabled).toBe(true);
+  });
+});
+
 describe("Cpu8080 IN/OUT", () => {
   it("advances PC past the port byte with no IoBus attached", () => {
     // the TK-80 panel runs the CPU with no IoBus (see main.ts), so OUT/IN must
